@@ -16,27 +16,43 @@ export function activate(context: vscode.ExtensionContext) {
   const sessionManager = new SessionManager(tracker, windowManager);
 
   const treeProvider = new TerminalTreeDataProvider(tracker, windowManager);
+  treeProvider.setExtensionPath(context.extensionPath);
   const treeView = vscode.window.createTreeView(
     "ccTabManagement.terminalActivity",
     { treeDataProvider: treeProvider, showCollapseAll: true }
   );
 
-  // Debounced click-to-focus: delays focus so context menu actions can cancel it
+  // Debounced click-to-focus: delays focus so context menu actions can cancel it.
+  // Tracks the target record ID so tree refreshes don't cancel a pending focus.
   let focusTimer: ReturnType<typeof setTimeout> | undefined;
+  let focusTargetId: string | undefined;
   const cancelPendingFocus = () => {
     if (focusTimer) {
       clearTimeout(focusTimer);
       focusTimer = undefined;
+      focusTargetId = undefined;
     }
   };
   // Expose cancel function for commands to call
   (globalThis as Record<string, unknown>).__tamCancelFocus = cancelPendingFocus;
 
   treeView.onDidChangeSelection((e) => {
-    cancelPendingFocus();
     const selected = e.selection[0];
+    const selectedId = selected?.kind === "terminal" ? selected.record.id : undefined;
+
+    // If a focus is already pending for this same terminal, don't cancel it
+    // (tree refreshes re-fire selection events for the same item)
+    if (focusTimer && selectedId === focusTargetId) {
+      return;
+    }
+
+    cancelPendingFocus();
+
     if (selected?.kind === "terminal" && selected.record.isLocal) {
+      focusTargetId = selected.record.id;
       focusTimer = setTimeout(() => {
+        focusTimer = undefined;
+        focusTargetId = undefined;
         const terminalMap = tracker.getTerminalMap();
         for (const [terminal, record] of terminalMap) {
           if (record.id === selected.record.id) {

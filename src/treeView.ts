@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
@@ -44,9 +45,14 @@ export class TerminalTreeDataProvider
   private _onDidChangeTreeData = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
   private _sortMode: SortMode = "time";
+  private _extensionPath: string = "";
 
   get sortMode(): SortMode {
     return this._sortMode;
+  }
+
+  setExtensionPath(extensionPath: string): void {
+    this._extensionPath = extensionPath;
   }
 
   constructor(
@@ -182,14 +188,15 @@ export class TerminalTreeDataProvider
     return relative;
   }
 
-  private buildIcon(r: ActivityRecord): vscode.ThemeIcon {
-    switch (r.claudeState) {
-      case "idle":
-        return new vscode.ThemeIcon(ICON_TERMINAL, new vscode.ThemeColor(COLOR_CLAUDE_IDLE));
-      case "generating":
+  private buildIcon(r: ActivityRecord): vscode.ThemeIcon | { light: vscode.Uri; dark: vscode.Uri } {
+    if (r.claudeState && r.claudeState !== "none" && this._extensionPath) {
+      // Generating uses spinning ThemeIcon (custom SVGs can't animate)
+      if (r.claudeState === "generating") {
         return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_CLAUDE_GENERATING));
-      case "approval":
-        return new vscode.ThemeIcon(ICON_CLAUDE_APPROVAL, new vscode.ThemeColor(COLOR_CLAUDE_APPROVAL));
+      }
+      const iconFile = `claude-${r.claudeState}.svg`;
+      const iconUri = vscode.Uri.file(path.join(this._extensionPath, "icons", iconFile));
+      return { light: iconUri, dark: iconUri };
     }
 
     return new vscode.ThemeIcon(
@@ -202,7 +209,7 @@ export class TerminalTreeDataProvider
 
   private buildTooltip(r: ActivityRecord, displayName: string, relative: string): string {
     const claudeLabel = this.claudeStateLabel(r.claudeState);
-    const claudeSuffix = claudeLabel ? ` [Claude: ${claudeLabel}]` : "";
+    const claudeSuffix = claudeLabel ? ` [${claudeLabel}]` : "";
     if (r.isLocal) {
       return `${displayName} — ${relative}${claudeSuffix}${r.displayName ? ` (${r.name})` : ""}`;
     }

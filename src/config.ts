@@ -53,9 +53,9 @@ export const ICON_CLAUDE_APPROVAL = "bell";
 
 export const LABEL_GROUP_ACTIVE = "Active Today";
 export const LABEL_GROUP_STALE = "Stale";
-export const LABEL_CLAUDE_IDLE = "Claude idle";
-export const LABEL_CLAUDE_GENERATING = "Claude generating";
-export const LABEL_CLAUDE_APPROVAL = "Claude waiting";
+export const LABEL_CLAUDE_IDLE = "idle";
+export const LABEL_CLAUDE_GENERATING = "generating";
+export const LABEL_CLAUDE_APPROVAL = "waiting";
 
 // ─── Paths ──────────────────────────────────────────────────────
 
