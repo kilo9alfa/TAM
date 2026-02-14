@@ -1,0 +1,142 @@
+{
+  "name": "tam-terminal-activity-management",
+  "displayName": "TAM - Terminal Activity Management",
+  "description": "Visual indication of terminal activity recency across VS Code windows, with session save & restore.",
+  "version": "0.1.0",
+  "publisher": "kilo9alfa",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "ccTabManagement.terminalActivity",
+          "name": "Terminal Activity",
+          "icon": "$(terminal)",
+          "contextualTitle": "Terminal Activity"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ccTabManagement.closeStaleTerminals",
+        "title": "Close Stale Terminals",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.showTerminalActivity",
+        "title": "Show Terminal Activity Panel",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.refreshActivity",
+        "title": "Refresh Terminal Activity",
+        "category": "Terminal Activity",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ccTabManagement.saveSession",
+        "title": "Save Terminal Session",
+        "category": "Terminal Activity",
+        "icon": "$(save)"
+      },
+      {
+        "command": "ccTabManagement.restoreSession",
+        "title": "Restore Terminal Session",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.manageSessions",
+        "title": "Manage Terminal Sessions",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.focusTerminal",
+        "title": "Focus Terminal",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.closeTerminal",
+        "title": "Close Terminal",
+        "category": "Terminal Activity"
+      },
+      {
+        "command": "ccTabManagement.renameTerminal",
+        "title": "Rename Terminal",
+        "category": "Terminal Activity",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "ccTabManagement.toggleSort",
+        "title": "Sort by Name",
+        "category": "Terminal Activity",
+        "icon": "$(case-sensitive)"
+      },
+      {
+        "command": "ccTabManagement.toggleSortBack",
+        "title": "Sort by Time",
+        "category": "Terminal Activity",
+        "icon": "$(history)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ccTabManagement.refreshActivity",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation"
+        },
+        {
+          "command": "ccTabManagement.saveSession",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation"
+        },
+        {
+          "command": "ccTabManagement.toggleSort",
+          "when": "view == ccTabManagement.terminalActivity && ccTabManagement.sortMode != name",
+          "group": "navigation"
+        },
+        {
+          "command": "ccTabManagement.toggleSortBack",
+          "when": "view == ccTabManagement.terminalActivity && ccTabManagement.sortMode == name",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ccTabManagement.renameTerminal",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local"
+        },
+        {
+          "command": "ccTabManagement.closeTerminal",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "group": "inline"
+        },
+        {
+          "command": "ccTabManagement.closeStaleTerminals",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == group_stale"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "vsce package",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
