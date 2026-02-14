@@ -118,13 +118,19 @@ function findClaudeDescendant(
 }
 
 function isClaudeProcess(command: string): boolean {
-  // Match common Claude Code process patterns
-  // e.g., "node /path/to/claude" or "/path/to/claude-code" or "claude"
+  // Only match the actual Claude Code binary, not paths containing .claude/
+  // Real examples: "claude --dangerously-skip-permissions", "claude", "node /path/to/claude"
+  // False positives to avoid: ".claude/shell-snapshots/...", ".claude/mcp-servers/...", "grep claude"
   const lower = command.toLowerCase();
-  return (
-    /\bclaude\b/.test(lower) &&
-    !lower.includes("claudedetector") // don't match ourselves
-  );
+
+  // Reject things that just reference .claude/ directories
+  if (lower.includes(".claude/")) return false;
+  // Reject grep/search processes that happen to mention "claude"
+  if (/\b(grep|rg|ag|find|ls|cat|head|tail)\b/.test(lower)) return false;
+
+  // Match: command starts with "claude" (the binary itself)
+  // or ends with "/claude" followed by args
+  return /(?:^|\/)claude(?:\s|$)/.test(lower);
 }
 
 function getAllProcesses(): ProcessInfo[] {

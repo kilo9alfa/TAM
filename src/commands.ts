@@ -18,24 +18,7 @@ export function registerCommands(
   treeProvider: TerminalTreeDataProvider
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "ccTabManagement.focusTerminal",
-      (arg: unknown) => {
-        // Accept either a record ID string or a tree item with record.id
-        const id = typeof arg === "string"
-          ? arg
-          : (arg as { record?: { id: string } })?.record?.id;
-        if (!id) return;
-
-        const terminalMap = tracker.getTerminalMap();
-        for (const [terminal, record] of terminalMap) {
-          if (record.id === id) {
-            terminal.show();
-            return;
-          }
-        }
-      }
-    ),
+    // focusTerminal is registered in extension.ts (with debounce + TreeItem.command support)
 
     vscode.commands.registerCommand(
       "ccTabManagement.closeTerminal",

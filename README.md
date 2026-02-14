@@ -88,7 +88,7 @@ TAM shares terminal state across VS Code windows via globalState. Terminals from
 
 ## Configuration
 
-All settings are centralized in [`src/config.ts`](src/config.ts). Key values:
+All settings are centralized in `src/config.ts`. Key values:
 
 | Setting | Default | Description |
 |---------|---------|-------------|

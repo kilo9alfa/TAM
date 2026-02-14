@@ -36,33 +36,24 @@ export function activate(context: vscode.ExtensionContext) {
   // Expose cancel function for commands to call
   (globalThis as Record<string, unknown>).__tamCancelFocus = cancelPendingFocus;
 
-  treeView.onDidChangeSelection((e) => {
-    const selected = e.selection[0];
-    const selectedId = selected?.kind === "terminal" ? selected.record.id : undefined;
-
-    // If a focus is already pending for this same terminal, don't cancel it
-    // (tree refreshes re-fire selection events for the same item)
-    if (focusTimer && selectedId === focusTargetId) {
-      return;
-    }
-
-    cancelPendingFocus();
-
-    if (selected?.kind === "terminal" && selected.record.isLocal) {
-      focusTargetId = selected.record.id;
+  // Register command that TreeItem.command invokes on every click
+  context.subscriptions.push(
+    vscode.commands.registerCommand("ccTabManagement.focusTerminal", (recordId: string) => {
+      cancelPendingFocus();
+      focusTargetId = recordId;
       focusTimer = setTimeout(() => {
         focusTimer = undefined;
         focusTargetId = undefined;
         const terminalMap = tracker.getTerminalMap();
         for (const [terminal, record] of terminalMap) {
-          if (record.id === selected.record.id) {
+          if (record.id === recordId) {
             terminal.show();
             return;
           }
         }
       }, FOCUS_DEBOUNCE_MS);
-    }
-  });
+    })
+  );
 
   // Debounced refresh for the tree
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;

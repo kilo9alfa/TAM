@@ -173,6 +173,12 @@ export class TerminalTreeDataProvider
 
     if (r.isLocal) {
       item.contextValue = "terminal_local";
+      // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
+      item.command = {
+        command: "ccTabManagement.focusTerminal",
+        title: "Focus Terminal",
+        arguments: [r.id],
+      };
     } else {
       item.contextValue = "terminal_remote";
     }
