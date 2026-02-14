@@ -1,3 +1,5 @@
+export type ClaudeState = "none" | "idle" | "generating" | "approval";
+
 export interface ActivityRecord {
   /** Stable ID: "<windowId>:<creationIndex>" */
   id: string;
@@ -14,6 +16,8 @@ export interface ActivityRecord {
   windowName: string;
   /** True if this terminal belongs to the current VS Code window */
   isLocal: boolean;
+  /** Claude Code state detected via process inspection */
+  claudeState?: ClaudeState;
 }
 
 export interface WindowState {

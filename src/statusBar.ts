@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ActivityTracker } from "./activityTracker";
 import { isActiveToday, formatRelativeTime } from "./utils";
+import { COLOR_ACTIVE, COLOR_STATUS_BAR_STALE } from "./config";
 
 export class StatusBarManager implements vscode.Disposable {
   private item: vscode.StatusBarItem;
@@ -45,16 +46,12 @@ export class StatusBarManager implements vscode.Disposable {
       const time = formatRelativeTime(record.lastActivity);
       this.item.text = `$(terminal) ${time}`;
       this.item.tooltip = `${record.name} — active ${time}`;
-      this.item.color = new vscode.ThemeColor(
-        "terminal.ansiGreen"
-      );
+      this.item.color = new vscode.ThemeColor(COLOR_ACTIVE);
     } else {
       const relative = formatRelativeTime(record.lastActivity);
       this.item.text = `$(terminal) ${relative}`;
       this.item.tooltip = `${record.name} — last active ${relative}`;
-      this.item.color = new vscode.ThemeColor(
-        "terminal.ansiYellow"
-      );
+      this.item.color = new vscode.ThemeColor(COLOR_STATUS_BAR_STALE);
     }
   }
 

@@ -3,8 +3,25 @@ import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
 import { isActiveToday, formatRelativeTime } from "./utils";
+import {
+  COLOR_ACTIVE,
+  COLOR_STALE,
+  COLOR_CLAUDE_IDLE,
+  COLOR_CLAUDE_GENERATING,
+  COLOR_CLAUDE_APPROVAL,
+  ICON_TERMINAL,
+  ICON_GROUP_ACTIVE,
+  ICON_GROUP_STALE,
+  ICON_CLAUDE_GENERATING,
+  ICON_CLAUDE_APPROVAL,
+  LABEL_GROUP_ACTIVE,
+  LABEL_GROUP_STALE,
+  LABEL_CLAUDE_IDLE,
+  LABEL_CLAUDE_GENERATING,
+  LABEL_CLAUDE_APPROVAL,
+} from "./config";
 
-type TreeElement = GroupItem | TerminalItem;
+export type TreeElement = GroupItem | TerminalItem;
 
 interface GroupItem {
   kind: "group";
@@ -103,7 +120,7 @@ export class TerminalTreeDataProvider
     if (active.length > 0) {
       groups.push({
         kind: "group",
-        label: "Active Today",
+        label: LABEL_GROUP_ACTIVE,
         active: true,
         count: active.length,
         terminals: active,
@@ -112,7 +129,7 @@ export class TerminalTreeDataProvider
     if (stale.length > 0) {
       groups.push({
         kind: "group",
-        label: "Stale",
+        label: LABEL_GROUP_STALE,
         active: false,
         count: stale.length,
         terminals: stale,
@@ -127,10 +144,10 @@ export class TerminalTreeDataProvider
       vscode.TreeItemCollapsibleState.Expanded
     );
     item.iconPath = new vscode.ThemeIcon(
-      group.active ? "circle-filled" : "circle-outline",
+      group.active ? ICON_GROUP_ACTIVE : ICON_GROUP_STALE,
       group.active
-        ? new vscode.ThemeColor("terminal.ansiGreen")
-        : new vscode.ThemeColor("disabledForeground")
+        ? new vscode.ThemeColor(COLOR_ACTIVE)
+        : new vscode.ThemeColor(COLOR_STALE)
     );
     item.contextValue = group.active ? "group_active" : "group_stale";
     return item;
@@ -144,29 +161,61 @@ export class TerminalTreeDataProvider
     const label = `${displayName}${windowSuffix}`;
 
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-    item.description = relative;
-    item.iconPath = new vscode.ThemeIcon(
-      "terminal",
-      isActiveToday(r)
-        ? new vscode.ThemeColor("terminal.ansiGreen")
-        : new vscode.ThemeColor("disabledForeground")
-    );
-    item.tooltip = r.isLocal
-      ? `${displayName} — ${relative}${r.displayName ? ` (${r.name})` : ""}`
-      : `${displayName} — ${relative} (${r.windowName})`;
+    item.description = this.buildDescription(r, relative);
+    item.iconPath = this.buildIcon(r);
+    item.tooltip = this.buildTooltip(r, displayName, relative);
 
     if (r.isLocal) {
-      item.command = {
-        command: "ccTabManagement.focusTerminal",
-        title: "Focus Terminal",
-        arguments: [r.id],
-      };
       item.contextValue = "terminal_local";
     } else {
       item.contextValue = "terminal_remote";
     }
 
     return item;
+  }
+
+  private buildDescription(r: ActivityRecord, relative: string): string {
+    const claudeLabel = this.claudeStateLabel(r.claudeState);
+    if (claudeLabel) {
+      return `${claudeLabel} · ${relative}`;
+    }
+    return relative;
+  }
+
+  private buildIcon(r: ActivityRecord): vscode.ThemeIcon {
+    switch (r.claudeState) {
+      case "idle":
+        return new vscode.ThemeIcon(ICON_TERMINAL, new vscode.ThemeColor(COLOR_CLAUDE_IDLE));
+      case "generating":
+        return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_CLAUDE_GENERATING));
+      case "approval":
+        return new vscode.ThemeIcon(ICON_CLAUDE_APPROVAL, new vscode.ThemeColor(COLOR_CLAUDE_APPROVAL));
+    }
+
+    return new vscode.ThemeIcon(
+      ICON_TERMINAL,
+      isActiveToday(r)
+        ? new vscode.ThemeColor(COLOR_ACTIVE)
+        : new vscode.ThemeColor(COLOR_STALE)
+    );
+  }
+
+  private buildTooltip(r: ActivityRecord, displayName: string, relative: string): string {
+    const claudeLabel = this.claudeStateLabel(r.claudeState);
+    const claudeSuffix = claudeLabel ? ` [Claude: ${claudeLabel}]` : "";
+    if (r.isLocal) {
+      return `${displayName} — ${relative}${claudeSuffix}${r.displayName ? ` (${r.name})` : ""}`;
+    }
+    return `${displayName} — ${relative}${claudeSuffix} (${r.windowName})`;
+  }
+
+  private claudeStateLabel(state: ActivityRecord["claudeState"]): string | undefined {
+    switch (state) {
+      case "idle": return LABEL_CLAUDE_IDLE;
+      case "generating": return LABEL_CLAUDE_GENERATING;
+      case "approval": return LABEL_CLAUDE_APPROVAL;
+      default: return undefined;
+    }
   }
 
   dispose(): void {

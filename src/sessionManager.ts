@@ -1,13 +1,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import * as os from "os";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
 import { resolveCwd } from "./cwdResolver";
-
-const SESSIONS_DIR = path.join(os.homedir(), ".vscode-terminal-sessions");
+import { SESSIONS_DIR } from "./config";
 
 export interface SessionTerminal {
   name: string;
@@ -34,7 +32,11 @@ export class SessionManager implements vscode.Disposable {
 
   /** Save current terminal workspace to a session file */
   async saveSession(): Promise<void> {
-    const defaultName = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const defaultName = `${y}.${m}.${d}`;
     const name = await vscode.window.showInputBox({
       prompt: "Session name",
       value: defaultName,

@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
 import { ActivityRecord, WindowState } from "./types";
 import { ActivityTracker } from "./activityTracker";
-
-const GLOBAL_STATE_PREFIX = "activity:";
-const POLL_INTERVAL_MS = 7_000;
-const STALE_WINDOW_THRESHOLD_MS = 60_000;
+import {
+  GLOBAL_STATE_PREFIX,
+  REMOTE_POLL_INTERVAL_MS,
+  STALE_WINDOW_THRESHOLD_MS,
+} from "./config";
 
 export class WindowManager implements vscode.Disposable {
   private pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -17,7 +18,7 @@ export class WindowManager implements vscode.Disposable {
     private context: vscode.ExtensionContext,
     private tracker: ActivityTracker
   ) {
-    this.pollTimer = setInterval(() => this.poll(), POLL_INTERVAL_MS);
+    this.pollTimer = setInterval(() => this.poll(), REMOTE_POLL_INTERVAL_MS);
     // Do an initial poll
     this.poll();
   }

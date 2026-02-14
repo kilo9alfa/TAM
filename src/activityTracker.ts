@@ -2,8 +2,12 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { ActivityRecord, WindowState } from "./types";
 import { resolveCwd } from "./cwdResolver";
-
-const GLOBAL_STATE_PREFIX = "activity:";
+import { detectClaudeStates, disposeClaudeDetector } from "./claudeDetector";
+import {
+  GLOBAL_STATE_PREFIX,
+  NAME_CHECK_INTERVAL_MS,
+  CLAUDE_CHECK_INTERVAL_MS,
+} from "./config";
 
 export class ActivityTracker implements vscode.Disposable {
   private records = new Map<number, ActivityRecord>();
@@ -56,10 +60,14 @@ export class ActivityTracker implements vscode.Disposable {
     this.loadFromGlobalState();
 
     // Poll for terminal name changes (no VS Code event for renames)
-    this.nameCheckTimer = setInterval(() => this.checkNameChanges(), 2000);
+    this.nameCheckTimer = setInterval(() => this.checkNameChanges(), NAME_CHECK_INTERVAL_MS);
+
+    // Poll for Claude Code state
+    this.claudeCheckTimer = setInterval(() => this.checkClaudeStates(), CLAUDE_CHECK_INTERVAL_MS);
   }
 
   private nameCheckTimer: ReturnType<typeof setInterval> | undefined;
+  private claudeCheckTimer: ReturnType<typeof setInterval> | undefined;
 
   /** Get activity record for a terminal */
   getRecord(terminal: vscode.Terminal): ActivityRecord | undefined {
@@ -218,8 +226,40 @@ export class ActivityTracker implements vscode.Disposable {
     }
   }
 
+  private checkClaudeStates(): void {
+    // Collect PIDs for all local terminals
+    const pidToIdx = new Map<number, number>();
+    for (const [_terminal, idx] of this.terminalIndexMap) {
+      const record = this.records.get(idx);
+      if (record?.processId) {
+        pidToIdx.set(record.processId, idx);
+      }
+    }
+
+    if (pidToIdx.size === 0) return;
+
+    const states = detectClaudeStates([...pidToIdx.keys()]);
+    let changed = false;
+
+    for (const [pid, state] of states) {
+      const idx = pidToIdx.get(pid);
+      if (idx === undefined) continue;
+      const record = this.records.get(idx);
+      if (record && record.claudeState !== state) {
+        record.claudeState = state;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this.fireChange();
+    }
+  }
+
   dispose(): void {
     if (this.nameCheckTimer) clearInterval(this.nameCheckTimer);
+    if (this.claudeCheckTimer) clearInterval(this.claudeCheckTimer);
+    disposeClaudeDetector();
     this.persistToGlobalState();
     this._onDidChange.dispose();
     for (const d of this.disposables) d.dispose();

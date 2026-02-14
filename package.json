@@ -69,6 +69,12 @@
         "category": "Terminal Activity"
       },
       {
+        "command": "ccTabManagement.searchTerminal",
+        "title": "Search Terminals",
+        "category": "Terminal Activity",
+        "icon": "$(search)"
+      },
+      {
         "command": "ccTabManagement.renameTerminal",
         "title": "Rename Terminal",
         "category": "Terminal Activity",
@@ -87,8 +93,26 @@
         "icon": "$(history)"
       }
     ],
+    "keybindings": [
+      {
+        "command": "ccTabManagement.searchTerminal",
+        "key": "ctrl+alt+s",
+        "mac": "ctrl+alt+s"
+      },
+      {
+        "command": "ccTabManagement.renameTerminal",
+        "key": "ctrl+alt+r",
+        "mac": "ctrl+alt+r",
+        "when": "terminalFocus"
+      }
+    ],
     "menus": {
       "view/title": [
+        {
+          "command": "ccTabManagement.searchTerminal",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation"
+        },
         {
           "command": "ccTabManagement.refreshActivity",
           "when": "view == ccTabManagement.terminalActivity",
