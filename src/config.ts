@@ -65,6 +65,11 @@ import * as os from "os";
 /** Directory where saved terminal sessions are stored */
 export const SESSIONS_DIR = path.join(os.homedir(), ".vscode-terminal-sessions");
 
+// ─── Tooltip ────────────────────────────────────────────────────
+
+/** Max length for last prompt text in Claude tooltip */
+export const TOOLTIP_PROMPT_MAX_LENGTH = 120;
+
 // ─── Internal keys ──────────────────────────────────────────────
 
 /** Prefix for globalState keys used by activity tracker / window manager */

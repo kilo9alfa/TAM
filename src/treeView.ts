@@ -4,6 +4,7 @@ import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
 import { isActiveToday, formatRelativeTime } from "./utils";
+import { ClaudeInfo } from "./types";
 import {
   COLOR_ACTIVE,
   COLOR_STALE,
@@ -20,6 +21,7 @@ import {
   LABEL_CLAUDE_IDLE,
   LABEL_CLAUDE_GENERATING,
   LABEL_CLAUDE_APPROVAL,
+  TOOLTIP_PROMPT_MAX_LENGTH,
 } from "./config";
 
 export type TreeElement = GroupItem | TerminalItem;
@@ -213,13 +215,76 @@ export class TerminalTreeDataProvider
     );
   }
 
-  private buildTooltip(r: ActivityRecord, displayName: string, relative: string): string {
+  private buildTooltip(r: ActivityRecord, displayName: string, relative: string): string | vscode.MarkdownString {
+    // Rich tooltip for Claude terminals
+    if (r.claudeInfo && r.claudeState && r.claudeState !== "none") {
+      return this.buildClaudeTooltip(r, displayName);
+    }
+
+    // Plain text for non-Claude terminals
     const claudeLabel = this.claudeStateLabel(r.claudeState);
     const claudeSuffix = claudeLabel ? ` [${claudeLabel}]` : "";
     if (r.isLocal) {
       return `${displayName} — ${relative}${claudeSuffix}${r.displayName ? ` (${r.name})` : ""}`;
     }
     return `${displayName} — ${relative}${claudeSuffix} (${r.windowName})`;
+  }
+
+  private buildClaudeTooltip(r: ActivityRecord, displayName: string): vscode.MarkdownString {
+    const info = r.claudeInfo!;
+    const stateLabel = this.claudeStateLabel(r.claudeState) ?? "unknown";
+    const lines: string[] = [];
+
+    // Header
+    lines.push(`**${displayName}** — *${stateLabel}*`);
+    lines.push("");
+
+    // CWD
+    if (info.cwd) {
+      lines.push(`$(folder) ${info.cwd}`);
+    }
+
+    // Uptime
+    if (info.etime) {
+      lines.push(`$(clock) Uptime: ${formatEtime(info.etime)}`);
+    }
+
+    // Permissions mode
+    if (info.skipPermissions) {
+      lines.push(`$(unlock) Skip permissions`);
+    } else {
+      lines.push(`$(lock) Default`);
+    }
+
+    // CPU & Memory
+    const memMB = (info.rss / 1024).toFixed(0);
+    lines.push(`$(dashboard) CPU: ${info.cpu.toFixed(1)}% | Memory: ${memMB} MB`);
+
+    // Subprocesses
+    if (info.childProcessCount > 0) {
+      lines.push(`$(list-tree) ${info.childProcessCount} subprocess${info.childProcessCount !== 1 ? "es" : ""}`);
+    }
+
+    // MCP servers
+    if (info.mcpServers.length > 0) {
+      lines.push(`$(server) MCP: ${info.mcpServers.join(", ")}`);
+    }
+
+    // Last prompt
+    if (info.lastPrompt) {
+      lines.push("");
+      lines.push("---");
+      lines.push("");
+      let prompt = info.lastPrompt;
+      if (prompt.length > TOOLTIP_PROMPT_MAX_LENGTH) {
+        prompt = prompt.slice(0, TOOLTIP_PROMPT_MAX_LENGTH) + "...";
+      }
+      lines.push(`*Last prompt:* "${prompt}"`);
+    }
+
+    const md = new vscode.MarkdownString(lines.join("\n\n"), true);
+    md.supportThemeIcons = true;
+    return md;
   }
 
   private claudeStateLabel(state: ActivityRecord["claudeState"]): string | undefined {
@@ -234,4 +299,38 @@ export class TerminalTreeDataProvider
   dispose(): void {
     this._onDidChangeTreeData.dispose();
   }
+}
+
+/**
+ * Format ps etime output (e.g. "2-19:12:34", "19:12:34", "12:34", "34") to human-readable.
+ */
+function formatEtime(etime: string): string {
+  const trimmed = etime.trim();
+  let days = 0;
+  let rest = trimmed;
+
+  // Handle DD- prefix
+  const dashIdx = rest.indexOf("-");
+  if (dashIdx !== -1) {
+    days = parseInt(rest.slice(0, dashIdx), 10);
+    rest = rest.slice(dashIdx + 1);
+  }
+
+  const parts = rest.split(":").map((s) => parseInt(s, 10));
+  let hours = 0, minutes = 0;
+
+  if (parts.length === 3) {
+    hours = parts[0];
+    minutes = parts[1];
+  } else if (parts.length === 2) {
+    hours = 0;
+    minutes = parts[0];
+  }
+
+  const segments: string[] = [];
+  if (days > 0) segments.push(`${days}d`);
+  if (hours > 0 || days > 0) segments.push(`${hours}h`);
+  segments.push(`${minutes}m`);
+
+  return segments.join(" ");
 }

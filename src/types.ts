@@ -1,5 +1,17 @@
 export type ClaudeState = "none" | "idle" | "generating" | "approval";
 
+export interface ClaudeInfo {
+  pid: number;
+  cwd?: string;
+  etime?: string;
+  skipPermissions: boolean;
+  cpu: number;
+  rss: number; // KB
+  lastPrompt?: string;
+  mcpServers: string[];
+  childProcessCount: number;
+}
+
 export interface ActivityRecord {
   /** Stable ID: "<windowId>:<creationIndex>" */
   id: string;
@@ -18,6 +30,8 @@ export interface ActivityRecord {
   isLocal: boolean;
   /** Claude Code state detected via process inspection */
   claudeState?: ClaudeState;
+  /** Rich Claude info (volatile, not persisted) */
+  claudeInfo?: ClaudeInfo;
 }
 
 export interface WindowState {

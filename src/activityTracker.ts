@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { ActivityRecord, WindowState } from "./types";
-import { resolveCwd } from "./cwdResolver";
+import { resolveCwd, batchResolveCwds } from "./cwdResolver";
 import { detectClaudeStates, disposeClaudeDetector } from "./claudeDetector";
+import { getLastPrompt, disposeHistoryCache } from "./claudeHistoryCache";
 import {
   GLOBAL_STATE_PREFIX,
   NAME_CHECK_INTERVAL_MS,
@@ -25,6 +26,9 @@ export class ActivityTracker implements vscode.Disposable {
     const folder = vscode.workspace.workspaceFolders?.[0];
     this.windowName = folder?.name ?? `Window`;
     this.windowId = folder?.uri.fsPath ?? `window-${process.pid}`;
+
+    // Load persisted records BEFORE registering terminals so displayNames are matched
+    this.loadFromGlobalState();
 
     // Register existing terminals
     for (const terminal of vscode.window.terminals) {
@@ -55,9 +59,6 @@ export class ActivityTracker implements vscode.Disposable {
         this.touch(e.terminal);
       })
     );
-
-    // Load persisted records for this window
-    this.loadFromGlobalState();
 
     // Poll for terminal name changes (no VS Code event for renames)
     this.nameCheckTimer = setInterval(() => this.checkNameChanges(), NAME_CHECK_INTERVAL_MS);
@@ -109,6 +110,7 @@ export class ActivityTracker implements vscode.Disposable {
       windowId: this.windowId,
       windowName: this.windowName,
       lastUpdated: Date.now(),
+      // Exclude claudeInfo (volatile data, not serialized)
       terminals: this.getLocalRecords().map((r) => ({
         id: r.id,
         name: r.name,
@@ -238,15 +240,49 @@ export class ActivityTracker implements vscode.Disposable {
 
     if (pidToIdx.size === 0) return;
 
-    const states = detectClaudeStates([...pidToIdx.keys()]);
+    const results = detectClaudeStates([...pidToIdx.keys()]);
     let changed = false;
 
-    for (const [pid, state] of states) {
+    // Collect Claude PIDs that need CWD resolution
+    const claudePids: number[] = [];
+    for (const [, { info }] of results) {
+      if (info) {
+        claudePids.push(info.pid);
+      }
+    }
+
+    // Batch resolve CWDs for all Claude processes
+    const cwds = claudePids.length > 0 ? batchResolveCwds(claudePids) : new Map<number, string>();
+
+    for (const [pid, { state, info }] of results) {
       const idx = pidToIdx.get(pid);
       if (idx === undefined) continue;
       const record = this.records.get(idx);
-      if (record && record.claudeState !== state) {
+      if (!record) continue;
+
+      if (record.claudeState !== state) {
         record.claudeState = state;
+        changed = true;
+      }
+
+      if (info) {
+        // Fill CWD from batch result
+        info.cwd = cwds.get(info.pid);
+        // Fill last prompt from history cache
+        if (info.cwd) {
+          info.lastPrompt = getLastPrompt(info.cwd);
+        }
+        // Only trigger tree refresh when claudeInfo is first attached or key fields change
+        const prev = record.claudeInfo;
+        if (!prev || prev.pid !== info.pid || prev.cwd !== info.cwd
+            || prev.childProcessCount !== info.childProcessCount
+            || prev.mcpServers.length !== info.mcpServers.length
+            || prev.lastPrompt !== info.lastPrompt) {
+          changed = true;
+        }
+        record.claudeInfo = info;
+      } else if (record.claudeInfo) {
+        record.claudeInfo = undefined;
         changed = true;
       }
     }
@@ -260,6 +296,7 @@ export class ActivityTracker implements vscode.Disposable {
     if (this.nameCheckTimer) clearInterval(this.nameCheckTimer);
     if (this.claudeCheckTimer) clearInterval(this.claudeCheckTimer);
     disposeClaudeDetector();
+    disposeHistoryCache();
     this.persistToGlobalState();
     this._onDidChange.dispose();
     for (const d of this.disposables) d.dispose();
