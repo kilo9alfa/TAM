@@ -96,12 +96,19 @@
         "command": "ccTabManagement.openClaudeMd",
         "title": "Open Global CLAUDE.md",
         "category": "Terminal Activity",
-        "icon": "$(notebook)"
+        "icon": {
+          "light": "icons/claude-idle.svg",
+          "dark": "icons/claude-idle.svg"
+        }
       },
       {
         "command": "ccTabManagement.editProjectClaudeMd",
         "title": "Edit CLAUDE.md",
-        "category": "Terminal Activity"
+        "category": "Terminal Activity",
+        "icon": {
+          "light": "icons/claude-idle.svg",
+          "dark": "icons/claude-idle.svg"
+        }
       }
     ],
     "keybindings": [
@@ -157,7 +164,8 @@
         },
         {
           "command": "ccTabManagement.editProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local"
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "group": "inline"
         },
         {
           "command": "ccTabManagement.closeTerminal",
