@@ -1,8 +1,12 @@
 import * as vscode from "vscode";
+import * as os from "os";
+import * as path from "path";
+import * as fs from "fs";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { SessionManager } from "./sessionManager";
 import { TerminalTreeDataProvider } from "./treeView";
+import { resolveCwd } from "./cwdResolver";
 import { isActiveToday, formatRelativeTime } from "./utils";
 
 function cancelPendingFocus(): void {
@@ -183,6 +187,66 @@ export function registerCommands(
         if (newName === undefined) return; // cancelled
 
         tracker.setDisplayName(recordId, newName.trim());
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.editProjectClaudeMd",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; processId?: number; claudeInfo?: { cwd?: string } } };
+        if (!item?.record?.id) return;
+
+        // Resolve CWD: stored record.cwd > claudeInfo.cwd > live resolveCwd(pid)
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        // Look for CLAUDE.md in the directory (case-insensitive search)
+        const candidates = ["CLAUDE.md", "claude.md", "Claude.md"];
+        let found: string | undefined;
+        for (const name of candidates) {
+          const p = path.join(cwd, name);
+          if (fs.existsSync(p)) {
+            found = p;
+            break;
+          }
+        }
+
+        if (!found) {
+          const create = await vscode.window.showInformationMessage(
+            `No CLAUDE.md found in ${cwd}. Create one?`,
+            "Create",
+            "Cancel"
+          );
+          if (create !== "Create") return;
+          found = path.join(cwd, "CLAUDE.md");
+          fs.writeFileSync(found, `# ${path.basename(cwd)}\n\n`, "utf-8");
+        }
+
+        await vscode.window.showTextDocument(vscode.Uri.file(found), {
+          viewColumn: vscode.ViewColumn.Active,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openClaudeMd",
+      async () => {
+        const filePath = path.join(os.homedir(), ".claude", "CLAUDE.md");
+        const uri = vscode.Uri.file(filePath);
+        try {
+          await vscode.commands.executeCommand("vscode.open", uri);
+        } catch {
+          vscode.window.showWarningMessage("Could not open ~/.claude/CLAUDE.md");
+        }
       }
     )
   );

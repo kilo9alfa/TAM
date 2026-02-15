@@ -158,11 +158,14 @@ export class ActivityTracker implements vscode.Disposable {
       if (!record) return;
       record.processId = pid;
 
-      // Auto-name from CWD if no user-set custom displayName
-      if (!record.displayNameIsCustom && pid) {
+      // Resolve and store CWD, auto-name if no custom displayName
+      if (pid) {
         const cwd = resolveCwd(pid);
         if (cwd) {
-          record.displayName = path.basename(cwd);
+          record.cwd = cwd;
+          if (!record.displayNameIsCustom) {
+            record.displayName = path.basename(cwd);
+          }
           this.fireChange();
         }
       }

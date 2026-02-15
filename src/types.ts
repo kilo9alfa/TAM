@@ -22,6 +22,8 @@ export interface ActivityRecord {
   /** True if displayName was explicitly set by user (won't be overwritten by auto-CWD) */
   displayNameIsCustom?: boolean;
   processId: number | undefined;
+  /** Resolved working directory of the terminal shell */
+  cwd?: string;
   lastActivity: number; // epoch ms
   createdAt: number; // epoch ms
   windowId: string;

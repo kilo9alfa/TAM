@@ -91,6 +91,17 @@
         "title": "Sort by Time",
         "category": "Terminal Activity",
         "icon": "$(history)"
+      },
+      {
+        "command": "ccTabManagement.openClaudeMd",
+        "title": "Open Global CLAUDE.md",
+        "category": "Terminal Activity",
+        "icon": "$(notebook)"
+      },
+      {
+        "command": "ccTabManagement.editProjectClaudeMd",
+        "title": "Edit CLAUDE.md",
+        "category": "Terminal Activity"
       }
     ],
     "keybindings": [
@@ -108,6 +119,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "ccTabManagement.openClaudeMd",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation"
+        },
         {
           "command": "ccTabManagement.searchTerminal",
           "when": "view == ccTabManagement.terminalActivity",
@@ -137,6 +153,10 @@
       "view/item/context": [
         {
           "command": "ccTabManagement.renameTerminal",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local"
+        },
+        {
+          "command": "ccTabManagement.editProjectClaudeMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local"
         },
         {
