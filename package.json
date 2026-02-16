@@ -159,8 +159,19 @@
       ],
       "view/item/context": [
         {
+          "command": "ccTabManagement.editProjectClaudeMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "group": "claude@1"
+        },
+        {
           "command": "ccTabManagement.renameTerminal",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local"
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "group": "terminal@1"
+        },
+        {
+          "command": "ccTabManagement.closeTerminal",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "group": "terminal@2"
         },
         {
           "command": "ccTabManagement.editProjectClaudeMd",
