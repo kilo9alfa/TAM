@@ -190,10 +190,13 @@ export class TerminalTreeDataProvider
 
   private buildDescription(r: ActivityRecord, relative: string): string {
     const claudeLabel = this.claudeStateLabel(r.claudeState);
+    const ctxSuffix = r.claudeInfo?.contextPercent !== undefined
+      ? `; ctx = ${r.claudeInfo.contextPercent}%`
+      : "";
     if (claudeLabel) {
-      return `${claudeLabel} · ${relative}`;
+      return `${claudeLabel} · ${relative}${ctxSuffix}`;
     }
-    return relative;
+    return `${relative}${ctxSuffix}`;
   }
 
   private buildIcon(r: ActivityRecord): vscode.ThemeIcon | { light: vscode.Uri; dark: vscode.Uri } {
@@ -263,6 +266,11 @@ export class TerminalTreeDataProvider
     // Subprocesses
     if (info.childProcessCount > 0) {
       lines.push(`$(list-tree) ${info.childProcessCount} subprocess${info.childProcessCount !== 1 ? "es" : ""}`);
+    }
+
+    // Context window usage
+    if (info.contextPercent !== undefined) {
+      lines.push(`$(symbol-ruler) Context: ${info.contextPercent}%`);
     }
 
     // MCP servers

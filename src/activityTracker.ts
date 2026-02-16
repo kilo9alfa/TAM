@@ -4,6 +4,7 @@ import { ActivityRecord, WindowState } from "./types";
 import { resolveCwd, batchResolveCwds } from "./cwdResolver";
 import { detectClaudeStates, disposeClaudeDetector } from "./claudeDetector";
 import { getLastPrompt, disposeHistoryCache } from "./claudeHistoryCache";
+import { getContextPercent, disposeContextUsageCache } from "./claudeContextUsage";
 import {
   GLOBAL_STATE_PREFIX,
   NAME_CHECK_INTERVAL_MS,
@@ -271,16 +272,18 @@ export class ActivityTracker implements vscode.Disposable {
       if (info) {
         // Fill CWD from batch result
         info.cwd = cwds.get(info.pid);
-        // Fill last prompt from history cache
+        // Fill last prompt from history cache and context usage
         if (info.cwd) {
           info.lastPrompt = getLastPrompt(info.cwd);
+          info.contextPercent = getContextPercent(info.cwd);
         }
         // Only trigger tree refresh when claudeInfo is first attached or key fields change
         const prev = record.claudeInfo;
         if (!prev || prev.pid !== info.pid || prev.cwd !== info.cwd
             || prev.childProcessCount !== info.childProcessCount
             || prev.mcpServers.length !== info.mcpServers.length
-            || prev.lastPrompt !== info.lastPrompt) {
+            || prev.lastPrompt !== info.lastPrompt
+            || prev.contextPercent !== info.contextPercent) {
           changed = true;
         }
         record.claudeInfo = info;
@@ -300,6 +303,7 @@ export class ActivityTracker implements vscode.Disposable {
     if (this.claudeCheckTimer) clearInterval(this.claudeCheckTimer);
     disposeClaudeDetector();
     disposeHistoryCache();
+    disposeContextUsageCache();
     this.persistToGlobalState();
     this._onDidChange.dispose();
     for (const d of this.disposables) d.dispose();

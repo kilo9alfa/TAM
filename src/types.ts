@@ -10,6 +10,7 @@ export interface ClaudeInfo {
   lastPrompt?: string;
   mcpServers: string[];
   childProcessCount: number;
+  contextPercent?: number;
 }
 
 export interface ActivityRecord {
