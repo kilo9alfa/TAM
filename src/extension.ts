@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { StatusBarManager } from "./statusBar";
-import { TerminalTreeDataProvider, TreeElement } from "./treeView";
+import { TerminalTreeDataProvider, ContextDecorationProvider, TreeElement } from "./treeView";
 import { SessionManager } from "./sessionManager";
 import { registerCommands } from "./commands";
 import { FOCUS_DEBOUNCE_MS, TREE_REFRESH_DEBOUNCE_MS } from "./config";
@@ -17,6 +17,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   const treeProvider = new TerminalTreeDataProvider(tracker, windowManager);
   treeProvider.setExtensionPath(context.extensionPath);
+  const ctxDecoProvider = new ContextDecorationProvider();
+  context.subscriptions.push(
+    vscode.window.registerFileDecorationProvider(ctxDecoProvider),
+    ctxDecoProvider
+  );
   const treeView = vscode.window.createTreeView(
     "ccTabManagement.terminalActivity",
     { treeDataProvider: treeProvider, showCollapseAll: true }
@@ -59,7 +64,10 @@ export function activate(context: vscode.ExtensionContext) {
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   const scheduleRefresh = () => {
     if (refreshTimer) clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => treeProvider.refresh(), TREE_REFRESH_DEBOUNCE_MS);
+    refreshTimer = setTimeout(() => {
+      treeProvider.refresh();
+      ctxDecoProvider.fireChange();
+    }, TREE_REFRESH_DEBOUNCE_MS);
   };
 
   context.subscriptions.push(

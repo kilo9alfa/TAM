@@ -24,6 +24,9 @@ import {
   TOOLTIP_PROMPT_MAX_LENGTH,
 } from "./config";
 
+const CTX_SCHEME = "tam-ctx";
+const CTX_WARN_THRESHOLD = 60;
+
 export type TreeElement = GroupItem | TerminalItem;
 
 interface GroupItem {
@@ -172,6 +175,19 @@ export class TerminalTreeDataProvider
     item.description = this.buildDescription(r, relative);
     item.iconPath = this.buildIcon(r);
     item.tooltip = this.buildTooltip(r, displayName, relative);
+
+    // Colorize high-context items via FileDecorationProvider
+    const ctx = r.claudeInfo?.contextPercent;
+    if (ctx !== undefined && ctx > CTX_WARN_THRESHOLD) {
+      try {
+        item.resourceUri = vscode.Uri.from({
+          scheme: CTX_SCHEME,
+          path: `/ctx-${ctx}`,
+        });
+      } catch {
+        // ignore URI errors
+      }
+    }
 
     if (r.isLocal) {
       item.contextValue = "terminal_local";
@@ -341,4 +357,30 @@ function formatEtime(etime: string): string {
   segments.push(`${minutes}m`);
 
   return segments.join(" ");
+}
+
+/**
+ * FileDecorationProvider that highlights tree items with high context usage (>60%) in red.
+ */
+export class ContextDecorationProvider implements vscode.FileDecorationProvider {
+  private _onDidChange = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
+  readonly onDidChangeFileDecorations = this._onDidChange.event;
+
+  provideFileDecoration(uri: vscode.Uri): vscode.FileDecoration | undefined {
+    if (uri.scheme !== CTX_SCHEME) return undefined;
+    // Everything with our scheme is above threshold — decorate in red
+    return {
+      color: new vscode.ThemeColor("list.errorForeground"),
+      badge: "!",
+      tooltip: "Context window usage high",
+    };
+  }
+
+  fireChange(): void {
+    this._onDidChange.fire(undefined);
+  }
+
+  dispose(): void {
+    this._onDidChange.dispose();
+  }
 }
