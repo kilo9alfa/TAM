@@ -4,7 +4,7 @@ import * as os from "os";
 
 const PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
 const MAX_CONTEXT_TOKENS = 200_000;
-const TAIL_BYTES = 16_384;
+const TAIL_BYTES = 131_072; // 128KB — must skip past in-progress generation output
 
 interface CacheEntry {
   mtimeMs: number;
