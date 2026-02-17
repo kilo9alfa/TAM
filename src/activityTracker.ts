@@ -276,6 +276,14 @@ export class ActivityTracker implements vscode.Disposable {
         if (info.cwd) {
           info.lastPrompt = getLastPrompt(info.cwd);
           info.contextPercent = getContextPercent(info.cwd);
+          // Update display name from Claude's CWD (more accurate than shell CWD)
+          if (!record.displayNameIsCustom) {
+            const claudeName = path.basename(info.cwd);
+            if (claudeName && record.displayName !== claudeName) {
+              record.displayName = claudeName;
+              changed = true;
+            }
+          }
         }
         // Only trigger tree refresh when claudeInfo is first attached or key fields change
         const prev = record.claudeInfo;
