@@ -111,7 +111,6 @@ export class ActivityTracker implements vscode.Disposable {
       windowId: this.windowId,
       windowName: this.windowName,
       lastUpdated: Date.now(),
-      // Exclude claudeInfo (volatile data, not serialized)
       terminals: this.getLocalRecords().map((r) => ({
         id: r.id,
         name: r.name,
@@ -122,6 +121,20 @@ export class ActivityTracker implements vscode.Disposable {
         createdAt: r.createdAt,
         windowId: r.windowId,
         windowName: r.windowName,
+        claudeState: r.claudeState,
+        // Serialize display-relevant claudeInfo fields for remote windows
+        claudeInfo: r.claudeInfo ? {
+          pid: r.claudeInfo.pid,
+          cwd: r.claudeInfo.cwd,
+          etime: r.claudeInfo.etime,
+          skipPermissions: r.claudeInfo.skipPermissions,
+          cpu: r.claudeInfo.cpu,
+          rss: r.claudeInfo.rss,
+          lastPrompt: r.claudeInfo.lastPrompt,
+          mcpServers: r.claudeInfo.mcpServers,
+          childProcessCount: r.claudeInfo.childProcessCount,
+          contextPercent: r.claudeInfo.contextPercent,
+        } : undefined,
       })),
     };
     this.context.globalState.update(

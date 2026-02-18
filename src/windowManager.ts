@@ -59,13 +59,15 @@ export class WindowManager implements vscode.Disposable {
       }
     }
 
-    // Check if anything changed
+    // Check if anything changed (including Claude state and context)
     const changed =
       newRemote.length !== this.remoteTerminals.length ||
       newRemote.some(
         (t, i) =>
           t.id !== this.remoteTerminals[i]?.id ||
-          t.lastActivity !== this.remoteTerminals[i]?.lastActivity
+          t.lastActivity !== this.remoteTerminals[i]?.lastActivity ||
+          t.claudeState !== this.remoteTerminals[i]?.claudeState ||
+          t.claudeInfo?.contextPercent !== this.remoteTerminals[i]?.claudeInfo?.contextPercent
       );
 
     this.remoteTerminals = newRemote;
