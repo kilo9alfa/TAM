@@ -116,6 +116,15 @@
         "title": "Create CLAUDE.md",
         "category": "Terminal Activity",
         "icon": "$(new-file)"
+      },
+      {
+        "command": "ccTabManagement.openMemoryMd",
+        "title": "Edit MEMORY.md",
+        "category": "Terminal Activity",
+        "icon": {
+          "light": "icons/memory.svg",
+          "dark": "icons/memory.svg"
+        }
       }
     ],
     "keybindings": [
@@ -167,13 +176,18 @@
       "view/item/context": [
         {
           "command": "ccTabManagement.editProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local_claudemd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /claudemd/",
           "group": "claude@1"
         },
         {
           "command": "ccTabManagement.createProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(_memorymd)?$/",
           "group": "claude@1"
+        },
+        {
+          "command": "ccTabManagement.openMemoryMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /memorymd/",
+          "group": "claude@2"
         },
         {
           "command": "ccTabManagement.renameTerminal",
@@ -187,12 +201,17 @@
         },
         {
           "command": "ccTabManagement.editProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local_claudemd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /claudemd/",
           "group": "inline"
         },
         {
           "command": "ccTabManagement.createProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(_memorymd)?$/",
+          "group": "inline"
+        },
+        {
+          "command": "ccTabManagement.openMemoryMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /memorymd/",
           "group": "inline"
         },
         {

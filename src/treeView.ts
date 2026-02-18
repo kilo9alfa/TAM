@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import * as os from "os";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
@@ -192,8 +193,13 @@ export class TerminalTreeDataProvider
     }
 
     if (r.isLocal) {
-      const hasClaude = hasClaudeMd(r.cwd || r.claudeInfo?.cwd);
-      item.contextValue = hasClaude ? "terminal_local_claudemd" : "terminal_local";
+      const cwd = r.cwd || r.claudeInfo?.cwd;
+      const hasClaude = hasClaudeMd(cwd);
+      const hasMemory = hasMemoryMd(cwd);
+      let ctx = "terminal_local";
+      if (hasClaude) ctx += "_claudemd";
+      if (hasMemory) ctx += "_memorymd";
+      item.contextValue = ctx;
       // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
       item.command = {
         command: "ccTabManagement.focusTerminal",
@@ -351,6 +357,22 @@ function hasClaudeMd(cwd: string | undefined): boolean {
     if (fs.existsSync(path.join(cwd, name))) return true;
   }
   return false;
+}
+
+/** Check if MEMORY.md exists in the Claude projects memory directory for the given CWD. */
+export function hasMemoryMd(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  const dirName = cwd.replace(/[^a-zA-Z0-9-]/g, "-");
+  const memoryPath = path.join(os.homedir(), ".claude", "projects", dirName, "memory", "MEMORY.md");
+  return fs.existsSync(memoryPath);
+}
+
+/** Resolve the MEMORY.md path for a given CWD. Returns undefined if not found. */
+export function resolveMemoryMdPath(cwd: string | undefined): string | undefined {
+  if (!cwd) return undefined;
+  const dirName = cwd.replace(/[^a-zA-Z0-9-]/g, "-");
+  const memoryPath = path.join(os.homedir(), ".claude", "projects", dirName, "memory", "MEMORY.md");
+  return fs.existsSync(memoryPath) ? memoryPath : undefined;
 }
 
 /**

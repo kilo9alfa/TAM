@@ -7,6 +7,7 @@ import { WindowManager } from "./windowManager";
 import { SessionManager } from "./sessionManager";
 import { TerminalTreeDataProvider } from "./treeView";
 import { resolveCwd } from "./cwdResolver";
+import { resolveMemoryMdPath } from "./treeView";
 import { isActiveToday, formatRelativeTime } from "./utils";
 
 function cancelPendingFocus(): void {
@@ -241,6 +242,36 @@ export function registerCommands(
     vscode.commands.registerCommand(
       "ccTabManagement.createProjectClaudeMd",
       (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.editProjectClaudeMd", ...args)
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openMemoryMd",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const memoryPath = resolveMemoryMdPath(cwd);
+        if (!memoryPath) {
+          vscode.window.showWarningMessage("No MEMORY.md found for this project.");
+          return;
+        }
+
+        await vscode.window.showTextDocument(vscode.Uri.file(memoryPath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
     ),
 
     vscode.commands.registerCommand(
