@@ -7,7 +7,7 @@ import { WindowManager } from "./windowManager";
 import { SessionManager } from "./sessionManager";
 import { TerminalTreeDataProvider } from "./treeView";
 import { resolveCwd } from "./cwdResolver";
-import { resolveMemoryMdPath } from "./treeView";
+import { resolveMemoryMdPath, getClaudeRulesFiles } from "./treeView";
 import { isActiveToday, formatRelativeTime } from "./utils";
 
 function cancelPendingFocus(): void {
@@ -260,10 +260,14 @@ export function registerCommands(
           return;
         }
 
-        const memoryPath = resolveMemoryMdPath(cwd);
+        let memoryPath = resolveMemoryMdPath(cwd);
         if (!memoryPath) {
-          vscode.window.showWarningMessage("No MEMORY.md found for this project.");
-          return;
+          // Create the memory directory and MEMORY.md
+          const dirName = cwd.replace(/[^a-zA-Z0-9-]/g, "-");
+          const memoryDir = path.join(os.homedir(), ".claude", "projects", dirName, "memory");
+          fs.mkdirSync(memoryDir, { recursive: true });
+          memoryPath = path.join(memoryDir, "MEMORY.md");
+          fs.writeFileSync(memoryPath, "", "utf-8");
         }
 
         await vscode.window.showTextDocument(vscode.Uri.file(memoryPath), {
@@ -274,13 +278,135 @@ export function registerCommands(
       }
     ),
 
+    // Alias: "Create MEMORY.md" uses the same handler
+    vscode.commands.registerCommand(
+      "ccTabManagement.createMemoryMd",
+      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.openMemoryMd", ...args)
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openClaudeRules",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const rulesDir = path.join(cwd, ".claude", "rules");
+        if (!fs.existsSync(rulesDir)) {
+          fs.mkdirSync(rulesDir, { recursive: true });
+        }
+
+        const files = getClaudeRulesFiles(cwd);
+
+        if (files.length === 0) {
+          const newFile = path.join(rulesDir, "rules.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (files.length === 1) {
+          await vscode.window.showTextDocument(vscode.Uri.file(files[0]), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(rulesDir));
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openProjectRules",
+      async () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        if (!folder) {
+          vscode.window.showWarningMessage("No workspace folder open.");
+          return;
+        }
+
+        const rulesDir = path.join(folder.uri.fsPath, ".claude", "rules");
+        if (!fs.existsSync(rulesDir)) {
+          fs.mkdirSync(rulesDir, { recursive: true });
+        }
+
+        const files = fs.readdirSync(rulesDir).filter((f) => f.endsWith(".md"));
+
+        if (files.length === 0) {
+          const newFile = path.join(rulesDir, "rules.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (files.length === 1) {
+          await vscode.window.showTextDocument(
+            vscode.Uri.file(path.join(rulesDir, files[0])),
+            { viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false }
+          );
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(rulesDir));
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openUserRules",
+      async () => {
+        const rulesDir = path.join(os.homedir(), ".claude", "rules");
+        if (!fs.existsSync(rulesDir)) {
+          fs.mkdirSync(rulesDir, { recursive: true });
+        }
+
+        const files = fs.readdirSync(rulesDir).filter((f) => f.endsWith(".md"));
+
+        if (files.length === 0) {
+          // Create an empty rules file and open it
+          const newFile = path.join(rulesDir, "rules.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (files.length === 1) {
+          await vscode.window.showTextDocument(
+            vscode.Uri.file(path.join(rulesDir, files[0])),
+            { viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false }
+          );
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(rulesDir));
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openGlobalMemoryMd",
+      async () => {
+        const memoryDir = path.join(os.homedir(), ".claude", "memory");
+        if (!fs.existsSync(memoryDir)) {
+          fs.mkdirSync(memoryDir, { recursive: true });
+        }
+        const filePath = path.join(memoryDir, "MEMORY.md");
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, "", "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+        });
+      }
+    ),
+
     vscode.commands.registerCommand(
       "ccTabManagement.openClaudeMd",
       async () => {
         const filePath = path.join(os.homedir(), ".claude", "CLAUDE.md");
         if (!fs.existsSync(filePath)) {
-          vscode.window.showWarningMessage("~/.claude/CLAUDE.md not found.");
-          return;
+          fs.writeFileSync(filePath, "# Global Claude Configuration\n\n", "utf-8");
         }
         await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
           viewColumn: vscode.ViewColumn.Beside,

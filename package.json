@@ -125,6 +125,45 @@
           "light": "icons/memory.svg",
           "dark": "icons/memory.svg"
         }
+      },
+      {
+        "command": "ccTabManagement.createMemoryMd",
+        "title": "Create MEMORY.md",
+        "category": "Terminal Activity",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "ccTabManagement.openClaudeRules",
+        "title": "Edit Rules",
+        "category": "Terminal Activity",
+        "icon": {
+          "light": "icons/rules.svg",
+          "dark": "icons/rules.svg"
+        }
+      },
+      {
+        "command": "ccTabManagement.openProjectRules",
+        "title": "Edit Project Rules",
+        "category": "Terminal Activity",
+        "icon": "$(law)"
+      },
+      {
+        "command": "ccTabManagement.openUserRules",
+        "title": "Edit User Rules",
+        "category": "Terminal Activity",
+        "icon": {
+          "light": "icons/rules.svg",
+          "dark": "icons/rules.svg"
+        }
+      },
+      {
+        "command": "ccTabManagement.openGlobalMemoryMd",
+        "title": "Edit Global MEMORY.md",
+        "category": "Terminal Activity",
+        "icon": {
+          "light": "icons/memory.svg",
+          "dark": "icons/memory.svg"
+        }
       }
     ],
     "keybindings": [
@@ -145,7 +184,17 @@
         {
           "command": "ccTabManagement.openClaudeMd",
           "when": "view == ccTabManagement.terminalActivity",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "ccTabManagement.openGlobalMemoryMd",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation@2"
+        },
+        {
+          "command": "ccTabManagement.openUserRules",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation@3"
         },
         {
           "command": "ccTabManagement.searchTerminal",
@@ -181,13 +230,23 @@
         },
         {
           "command": "ccTabManagement.createProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(_memorymd)?$/",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*claudemd)/",
           "group": "claude@1"
         },
         {
           "command": "ccTabManagement.openMemoryMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /memorymd/",
           "group": "claude@2"
+        },
+        {
+          "command": "ccTabManagement.createMemoryMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*memorymd)/",
+          "group": "claude@2"
+        },
+        {
+          "command": "ccTabManagement.openClaudeRules",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
+          "group": "claude@3"
         },
         {
           "command": "ccTabManagement.renameTerminal",
@@ -202,22 +261,32 @@
         {
           "command": "ccTabManagement.editProjectClaudeMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /claudemd/",
-          "group": "inline"
+          "group": "inline@1"
         },
         {
           "command": "ccTabManagement.createProjectClaudeMd",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(_memorymd)?$/",
-          "group": "inline"
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*claudemd)/",
+          "group": "inline@1"
         },
         {
           "command": "ccTabManagement.openMemoryMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /memorymd/",
-          "group": "inline"
+          "group": "inline@2"
+        },
+        {
+          "command": "ccTabManagement.createMemoryMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*memorymd)/",
+          "group": "inline@2"
+        },
+        {
+          "command": "ccTabManagement.openClaudeRules",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
+          "group": "inline@3"
         },
         {
           "command": "ccTabManagement.closeTerminal",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
-          "group": "inline"
+          "group": "inline@4"
         },
         {
           "command": "ccTabManagement.closeStaleTerminals",

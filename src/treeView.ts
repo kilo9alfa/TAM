@@ -196,9 +196,11 @@ export class TerminalTreeDataProvider
       const cwd = r.cwd || r.claudeInfo?.cwd;
       const hasClaude = hasClaudeMd(cwd);
       const hasMemory = hasMemoryMd(cwd);
+      const hasRules = hasClaudeRules(cwd);
       let ctx = "terminal_local";
       if (hasClaude) ctx += "_claudemd";
       if (hasMemory) ctx += "_memorymd";
+      if (hasRules) ctx += "_rules";
       item.contextValue = ctx;
       // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
       item.command = {
@@ -373,6 +375,30 @@ export function resolveMemoryMdPath(cwd: string | undefined): string | undefined
   const dirName = cwd.replace(/[^a-zA-Z0-9-]/g, "-");
   const memoryPath = path.join(os.homedir(), ".claude", "projects", dirName, "memory", "MEMORY.md");
   return fs.existsSync(memoryPath) ? memoryPath : undefined;
+}
+
+/** Check if .claude/rules/*.md files exist in the given CWD. */
+export function hasClaudeRules(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  const rulesDir = path.join(cwd, ".claude", "rules");
+  try {
+    return fs.readdirSync(rulesDir).some((f) => f.endsWith(".md"));
+  } catch {
+    return false;
+  }
+}
+
+/** Get all .md files in .claude/rules/ for the given CWD. */
+export function getClaudeRulesFiles(cwd: string | undefined): string[] {
+  if (!cwd) return [];
+  const rulesDir = path.join(cwd, ".claude", "rules");
+  try {
+    return fs.readdirSync(rulesDir)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => path.join(rulesDir, f));
+  } catch {
+    return [];
+  }
 }
 
 /**
