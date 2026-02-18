@@ -110,6 +110,12 @@
           "light": "icons/claude-idle.svg",
           "dark": "icons/claude-idle.svg"
         }
+      },
+      {
+        "command": "ccTabManagement.createProjectClaudeMd",
+        "title": "Create CLAUDE.md",
+        "category": "Terminal Activity",
+        "icon": "$(new-file)"
       }
     ],
     "keybindings": [
@@ -161,27 +167,37 @@
       "view/item/context": [
         {
           "command": "ccTabManagement.editProjectClaudeMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local_claudemd",
+          "group": "claude@1"
+        },
+        {
+          "command": "ccTabManagement.createProjectClaudeMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
           "group": "claude@1"
         },
         {
           "command": "ccTabManagement.renameTerminal",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
           "group": "terminal@1"
         },
         {
           "command": "ccTabManagement.closeTerminal",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
           "group": "terminal@2"
         },
         {
           "command": "ccTabManagement.editProjectClaudeMd",
+          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local_claudemd",
+          "group": "inline"
+        },
+        {
+          "command": "ccTabManagement.createProjectClaudeMd",
           "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
           "group": "inline"
         },
         {
           "command": "ccTabManagement.closeTerminal",
-          "when": "view == ccTabManagement.terminalActivity && viewItem == terminal_local",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
           "group": "inline"
         },
         {

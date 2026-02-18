@@ -230,11 +230,17 @@ export function registerCommands(
         }
 
         await vscode.window.showTextDocument(vscode.Uri.file(found), {
-          viewColumn: vscode.ViewColumn.Active,
+          viewColumn: vscode.ViewColumn.Beside,
           preview: false,
           preserveFocus: false,
         });
       }
+    ),
+
+    // Alias: "Create CLAUDE.md" uses the same handler as "Edit CLAUDE.md"
+    vscode.commands.registerCommand(
+      "ccTabManagement.createProjectClaudeMd",
+      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.editProjectClaudeMd", ...args)
     ),
 
     vscode.commands.registerCommand(

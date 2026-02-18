@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
 import { ActivityTracker } from "./activityTracker";
 import { WindowManager } from "./windowManager";
 import { ActivityRecord } from "./types";
@@ -190,7 +191,8 @@ export class TerminalTreeDataProvider
     }
 
     if (r.isLocal) {
-      item.contextValue = "terminal_local";
+      const hasClaude = hasClaudeMd(r.cwd || r.claudeInfo?.cwd);
+      item.contextValue = hasClaude ? "terminal_local_claudemd" : "terminal_local";
       // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
       item.command = {
         command: "ccTabManagement.focusTerminal",
@@ -323,6 +325,15 @@ export class TerminalTreeDataProvider
   dispose(): void {
     this._onDidChangeTreeData.dispose();
   }
+}
+
+/** Check if CLAUDE.md exists in the given directory. */
+function hasClaudeMd(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  for (const name of ["CLAUDE.md", "claude.md", "Claude.md"]) {
+    if (fs.existsSync(path.join(cwd, name))) return true;
+  }
+  return false;
 }
 
 /**
