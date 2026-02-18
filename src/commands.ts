@@ -402,6 +402,85 @@ export function registerCommands(
     ),
 
     vscode.commands.registerCommand(
+      "ccTabManagement.openUserSkills",
+      async () => {
+        const skillsDir = path.join(os.homedir(), ".claude", "skills");
+        if (!fs.existsSync(skillsDir)) {
+          fs.mkdirSync(skillsDir, { recursive: true });
+        }
+
+        const entries = fs.readdirSync(skillsDir, { withFileTypes: true })
+          .filter((e) => e.isDirectory() || e.name.endsWith(".md"));
+
+        if (entries.length === 0) {
+          const newFile = path.join(skillsDir, "skill.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (entries.length === 1) {
+          const entry = entries[0];
+          const entryPath = path.join(skillsDir, entry.name);
+          if (entry.isDirectory()) {
+            await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(entryPath));
+          } else {
+            await vscode.window.showTextDocument(vscode.Uri.file(entryPath), {
+              viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+            });
+          }
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(skillsDir));
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openProjectCommands",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const commandsDir = path.join(cwd, ".claude", "commands");
+        if (!fs.existsSync(commandsDir)) {
+          fs.mkdirSync(commandsDir, { recursive: true });
+        }
+
+        const files = fs.readdirSync(commandsDir).filter((f) => f.endsWith(".md"));
+
+        if (files.length === 0) {
+          const newFile = path.join(commandsDir, "command.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (files.length === 1) {
+          await vscode.window.showTextDocument(
+            vscode.Uri.file(path.join(commandsDir, files[0])),
+            { viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false }
+          );
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(commandsDir));
+        }
+      }
+    ),
+
+    // Alias: "Create Command" uses the same handler
+    vscode.commands.registerCommand(
+      "ccTabManagement.createProjectCommand",
+      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.openProjectCommands", ...args)
+    ),
+
+    vscode.commands.registerCommand(
       "ccTabManagement.openClaudeMd",
       async () => {
         const filePath = path.join(os.homedir(), ".claude", "CLAUDE.md");

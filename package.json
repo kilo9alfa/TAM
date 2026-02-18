@@ -157,6 +157,24 @@
         }
       },
       {
+        "command": "ccTabManagement.openUserSkills",
+        "title": "Edit Skills",
+        "category": "Terminal Activity",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "ccTabManagement.openProjectCommands",
+        "title": "Edit Commands",
+        "category": "Terminal Activity",
+        "icon": "$(terminal-cmd)"
+      },
+      {
+        "command": "ccTabManagement.createProjectCommand",
+        "title": "Create Command",
+        "category": "Terminal Activity",
+        "icon": "$(new-file)"
+      },
+      {
         "command": "ccTabManagement.openGlobalMemoryMd",
         "title": "Edit Global MEMORY.md",
         "category": "Terminal Activity",
@@ -195,6 +213,11 @@
           "command": "ccTabManagement.openUserRules",
           "when": "view == ccTabManagement.terminalActivity",
           "group": "navigation@3"
+        },
+        {
+          "command": "ccTabManagement.openUserSkills",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation@4"
         },
         {
           "command": "ccTabManagement.searchTerminal",
@@ -284,9 +307,19 @@
           "group": "inline@3"
         },
         {
+          "command": "ccTabManagement.openProjectCommands",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_commands/",
+          "group": "inline@4"
+        },
+        {
+          "command": "ccTabManagement.createProjectCommand",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_commands)/",
+          "group": "inline@4"
+        },
+        {
           "command": "ccTabManagement.closeTerminal",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
-          "group": "inline@4"
+          "group": "inline@5"
         },
         {
           "command": "ccTabManagement.closeStaleTerminals",

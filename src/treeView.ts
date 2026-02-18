@@ -197,10 +197,12 @@ export class TerminalTreeDataProvider
       const hasClaude = hasClaudeMd(cwd);
       const hasMemory = hasMemoryMd(cwd);
       const hasRules = hasClaudeRules(cwd);
+      const hasCmds = hasClaudeCommands(cwd);
       let ctx = "terminal_local";
       if (hasClaude) ctx += "_claudemd";
       if (hasMemory) ctx += "_memorymd";
       if (hasRules) ctx += "_rules";
+      if (hasCmds) ctx += "_commands";
       item.contextValue = ctx;
       // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
       item.command = {
@@ -383,6 +385,17 @@ export function hasClaudeRules(cwd: string | undefined): boolean {
   const rulesDir = path.join(cwd, ".claude", "rules");
   try {
     return fs.readdirSync(rulesDir).some((f) => f.endsWith(".md"));
+  } catch {
+    return false;
+  }
+}
+
+/** Check if .claude/commands/*.md files exist in the given CWD. */
+export function hasClaudeCommands(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  const commandsDir = path.join(cwd, ".claude", "commands");
+  try {
+    return fs.readdirSync(commandsDir).some((f) => f.endsWith(".md"));
   } catch {
     return false;
   }
