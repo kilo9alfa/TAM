@@ -8,6 +8,7 @@ import { isActiveToday, formatRelativeTime } from "./utils";
 import { ClaudeInfo } from "./types";
 import {
   COLOR_ACTIVE,
+  COLOR_REMOTE,
   COLOR_STALE,
   COLOR_CLAUDE_IDLE,
   COLOR_CLAUDE_GENERATING,
@@ -219,6 +220,14 @@ export class TerminalTreeDataProvider
 
   private buildIcon(r: ActivityRecord): vscode.ThemeIcon | { light: vscode.Uri; dark: vscode.Uri } {
     if (r.claudeState && r.claudeState !== "none" && this._extensionPath) {
+      // Remote Claude terminals: use cyan-tinted ThemeIcons instead of custom SVGs
+      if (!r.isLocal) {
+        if (r.claudeState === "generating") {
+          return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_REMOTE));
+        }
+        const icon = r.claudeState === "approval" ? ICON_CLAUDE_APPROVAL : "terminal";
+        return new vscode.ThemeIcon(icon, new vscode.ThemeColor(COLOR_REMOTE));
+      }
       // Generating uses spinning ThemeIcon (custom SVGs can't animate)
       if (r.claudeState === "generating") {
         return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_CLAUDE_GENERATING));
@@ -228,6 +237,14 @@ export class TerminalTreeDataProvider
       return { light: iconUri, dark: iconUri };
     }
 
+    if (!r.isLocal) {
+      return new vscode.ThemeIcon(
+        ICON_TERMINAL,
+        isActiveToday(r)
+          ? new vscode.ThemeColor(COLOR_REMOTE)
+          : new vscode.ThemeColor(COLOR_STALE)
+      );
+    }
     return new vscode.ThemeIcon(
       ICON_TERMINAL,
       isActiveToday(r)

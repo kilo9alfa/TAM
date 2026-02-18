@@ -35,6 +35,7 @@ export const CPU_GENERATING_THRESHOLD = 5;
 // ─── Colors (VS Code ThemeColor IDs) ────────────────────────────
 
 export const COLOR_ACTIVE = "terminal.ansiGreen";
+export const COLOR_REMOTE = "terminal.ansiCyan";
 export const COLOR_STALE = "disabledForeground";
 export const COLOR_STATUS_BAR_STALE = "terminal.ansiYellow";
 export const COLOR_CLAUDE_IDLE = "terminal.ansiGreen";

@@ -220,13 +220,45 @@ export class ActivityTracker implements vscode.Disposable {
 
   private checkNameChanges(): void {
     let changed = false;
+
+    // Collect PIDs for batch CWD resolution
+    const pidToIdx = new Map<number, number>();
     for (const [terminal, idx] of this.terminalIndexMap) {
       const record = this.records.get(idx);
-      if (record && record.name !== terminal.name) {
+      if (!record) continue;
+
+      if (record.name !== terminal.name) {
         record.name = terminal.name;
         changed = true;
       }
+
+      if (record.processId) {
+        pidToIdx.set(record.processId, idx);
+      }
     }
+
+    // Re-resolve CWDs for all terminals to detect directory changes
+    if (pidToIdx.size > 0) {
+      const cwds = batchResolveCwds([...pidToIdx.keys()]);
+      for (const [pid, cwd] of cwds) {
+        const idx = pidToIdx.get(pid);
+        if (idx === undefined) continue;
+        const record = this.records.get(idx);
+        if (!record) continue;
+
+        if (record.cwd !== cwd) {
+          record.cwd = cwd;
+          if (!record.displayNameIsCustom) {
+            const newName = path.basename(cwd);
+            if (newName && record.displayName !== newName) {
+              record.displayName = newName;
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+
     if (changed) {
       this.fireChange();
     }

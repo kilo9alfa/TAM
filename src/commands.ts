@@ -247,12 +247,15 @@ export function registerCommands(
       "ccTabManagement.openClaudeMd",
       async () => {
         const filePath = path.join(os.homedir(), ".claude", "CLAUDE.md");
-        const uri = vscode.Uri.file(filePath);
-        try {
-          await vscode.commands.executeCommand("vscode.open", uri);
-        } catch {
-          vscode.window.showWarningMessage("Could not open ~/.claude/CLAUDE.md");
+        if (!fs.existsSync(filePath)) {
+          vscode.window.showWarningMessage("~/.claude/CLAUDE.md not found.");
+          return;
         }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
       }
     )
   );
