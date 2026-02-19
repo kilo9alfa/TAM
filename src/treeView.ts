@@ -198,11 +198,15 @@ export class TerminalTreeDataProvider
       const hasMemory = hasMemoryMd(cwd);
       const hasRules = hasClaudeRules(cwd);
       const hasCmds = hasClaudeCommands(cwd);
+      const hasSettings = hasProjectSettings(cwd);
+      const hasAgents = hasProjectAgents(cwd);
       let ctx = "terminal_local";
       if (hasClaude) ctx += "_claudemd";
       if (hasMemory) ctx += "_memorymd";
       if (hasRules) ctx += "_rules";
       if (hasCmds) ctx += "_commands";
+      if (hasSettings) ctx += "_settings";
+      if (hasAgents) ctx += "_agents";
       item.contextValue = ctx;
       // Command fires on every click, unlike onDidChangeSelection which skips re-clicks
       item.command = {
@@ -396,6 +400,23 @@ export function hasClaudeCommands(cwd: string | undefined): boolean {
   const commandsDir = path.join(cwd, ".claude", "commands");
   try {
     return fs.readdirSync(commandsDir).some((f) => f.endsWith(".md"));
+  } catch {
+    return false;
+  }
+}
+
+/** Check if .claude/settings.json exists in the given CWD. */
+export function hasProjectSettings(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  return fs.existsSync(path.join(cwd, ".claude", "settings.json"));
+}
+
+/** Check if .claude/agents/*.md files exist in the given CWD. */
+export function hasProjectAgents(cwd: string | undefined): boolean {
+  if (!cwd) return false;
+  const agentsDir = path.join(cwd, ".claude", "agents");
+  try {
+    return fs.readdirSync(agentsDir).some((f) => f.endsWith(".md"));
   } catch {
     return false;
   }

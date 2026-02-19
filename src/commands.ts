@@ -481,6 +481,90 @@ export function registerCommands(
     ),
 
     vscode.commands.registerCommand(
+      "ccTabManagement.openProjectSettings",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const claudeDir = path.join(cwd, ".claude");
+        if (!fs.existsSync(claudeDir)) {
+          fs.mkdirSync(claudeDir, { recursive: true });
+        }
+
+        const settingsPath = path.join(claudeDir, "settings.json");
+        if (!fs.existsSync(settingsPath)) {
+          fs.writeFileSync(settingsPath, "{}\n", "utf-8");
+        }
+
+        await vscode.window.showTextDocument(vscode.Uri.file(settingsPath), {
+          viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+        });
+      }
+    ),
+
+    // Alias: "Create Project Settings" uses the same handler
+    vscode.commands.registerCommand(
+      "ccTabManagement.createProjectSettings",
+      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.openProjectSettings", ...args)
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openProjectAgents",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const agentsDir = path.join(cwd, ".claude", "agents");
+        if (!fs.existsSync(agentsDir)) {
+          fs.mkdirSync(agentsDir, { recursive: true });
+        }
+
+        const files = fs.readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
+
+        if (files.length === 0) {
+          const newFile = path.join(agentsDir, "agent.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (files.length === 1) {
+          await vscode.window.showTextDocument(
+            vscode.Uri.file(path.join(agentsDir, files[0])),
+            { viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false }
+          );
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(agentsDir));
+        }
+      }
+    ),
+
+    // Alias: "Create Agent" uses the same handler
+    vscode.commands.registerCommand(
+      "ccTabManagement.createProjectAgent",
+      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.openProjectAgents", ...args)
+    ),
+
+    vscode.commands.registerCommand(
       "ccTabManagement.openClaudeMd",
       async () => {
         const filePath = path.join(os.homedir(), ".claude", "CLAUDE.md");
