@@ -577,6 +577,36 @@ export function registerCommands(
           preserveFocus: false,
         });
       }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openUserSettings",
+      async () => {
+        const filePath = path.join(os.homedir(), ".claude", "settings.json");
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, "{}\n", "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openKeybindings",
+      async () => {
+        const filePath = path.join(os.homedir(), ".claude", "keybindings.json");
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, "{}\n", "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
     )
   );
 }
