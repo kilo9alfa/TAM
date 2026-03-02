@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
     windowManager.onDidChange(scheduleRefresh)
   );
 
-  registerCommands(context, tracker, windowManager, sessionManager, treeProvider);
+  registerCommands(context, tracker, windowManager, sessionManager, treeProvider, treeView);
 }
 
 export function deactivate() {

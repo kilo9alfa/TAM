@@ -218,6 +218,30 @@
         "title": "Edit Keybindings",
         "category": "Terminal Activity",
         "icon": "$(keyboard)"
+      },
+      {
+        "command": "ccTabManagement.openMcpConfig",
+        "title": "Edit MCP Config",
+        "category": "Terminal Activity",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "ccTabManagement.openProjectMcpConfig",
+        "title": "Edit Project MCP Config",
+        "category": "Terminal Activity",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "ccTabManagement.projectSettingsMenu",
+        "title": "Project Settings...",
+        "category": "Terminal Activity",
+        "icon": "$(ellipsis)"
+      },
+      {
+        "command": "ccTabManagement.globalSettingsMenu",
+        "title": "Global Settings...",
+        "category": "Terminal Activity",
+        "icon": "$(ellipsis)"
       }
     ],
     "keybindings": [
@@ -256,14 +280,9 @@
           "group": "navigation@4"
         },
         {
-          "command": "ccTabManagement.openUserSettings",
+          "command": "ccTabManagement.globalSettingsMenu",
           "when": "view == ccTabManagement.terminalActivity",
           "group": "navigation@5"
-        },
-        {
-          "command": "ccTabManagement.openKeybindings",
-          "when": "view == ccTabManagement.terminalActivity",
-          "group": "navigation@6"
         },
         {
           "command": "ccTabManagement.searchTerminal",
@@ -318,24 +337,9 @@
           "group": "claude@3"
         },
         {
-          "command": "ccTabManagement.openProjectSettings",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_settings/",
+          "command": "ccTabManagement.projectSettingsMenu",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
           "group": "claude@4"
-        },
-        {
-          "command": "ccTabManagement.createProjectSettings",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_settings)/",
-          "group": "claude@4"
-        },
-        {
-          "command": "ccTabManagement.openProjectAgents",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_agents/",
-          "group": "claude@5"
-        },
-        {
-          "command": "ccTabManagement.createProjectAgent",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_agents)/",
-          "group": "claude@5"
         },
         {
           "command": "ccTabManagement.renameTerminal",
@@ -383,29 +387,14 @@
           "group": "inline@4"
         },
         {
-          "command": "ccTabManagement.openProjectSettings",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_settings/",
+          "command": "ccTabManagement.projectSettingsMenu",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
           "group": "inline@5"
-        },
-        {
-          "command": "ccTabManagement.createProjectSettings",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_settings)/",
-          "group": "inline@5"
-        },
-        {
-          "command": "ccTabManagement.openProjectAgents",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_agents/",
-          "group": "inline@6"
-        },
-        {
-          "command": "ccTabManagement.createProjectAgent",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_agents)/",
-          "group": "inline@6"
         },
         {
           "command": "ccTabManagement.closeTerminal",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
-          "group": "inline@7"
+          "group": "inline@6"
         },
         {
           "command": "ccTabManagement.closeStaleTerminals",

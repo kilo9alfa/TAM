@@ -15,12 +15,30 @@ function cancelPendingFocus(): void {
   if (typeof cancel === "function") cancel();
 }
 
+type TreeItemRecord = { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+
+function resolveTreeItem(
+  treeItem: unknown,
+  treeView: vscode.TreeView<unknown>
+): TreeItemRecord | undefined {
+  if (treeItem && (treeItem as TreeItemRecord).record) {
+    return treeItem as TreeItemRecord;
+  }
+  // Fallback: use currently selected tree item (for submenu invocations)
+  const sel = treeView.selection;
+  if (sel.length > 0 && (sel[0] as TreeItemRecord).record) {
+    return sel[0] as TreeItemRecord;
+  }
+  return undefined;
+}
+
 export function registerCommands(
   context: vscode.ExtensionContext,
   tracker: ActivityTracker,
   windowManager: WindowManager,
   sessionManager: SessionManager,
-  treeProvider: TerminalTreeDataProvider
+  treeProvider: TerminalTreeDataProvider,
+  treeView: vscode.TreeView<unknown>
 ): void {
   context.subscriptions.push(
     // focusTerminal is registered in extension.ts (with debounce + TreeItem.command support)
@@ -238,10 +256,30 @@ export function registerCommands(
       }
     ),
 
-    // Alias: "Create CLAUDE.md" uses the same handler as "Edit CLAUDE.md"
     vscode.commands.registerCommand(
       "ccTabManagement.createProjectClaudeMd",
-      (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.editProjectClaudeMd", ...args)
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = treeItem as { record?: { id: string; cwd?: string; processId?: number; claudeInfo?: { cwd?: string } } };
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const filePath = path.join(cwd, "CLAUDE.md");
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, `# ${path.basename(cwd)}\n\n`, "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+        });
+      }
     ),
 
     vscode.commands.registerCommand(
@@ -484,7 +522,7 @@ export function registerCommands(
       "ccTabManagement.openProjectSettings",
       async (treeItem: unknown) => {
         cancelPendingFocus();
-        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        const item = resolveTreeItem(treeItem, treeView);
         if (!item?.record?.id) return;
 
         let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
@@ -522,7 +560,7 @@ export function registerCommands(
       "ccTabManagement.openProjectAgents",
       async (treeItem: unknown) => {
         cancelPendingFocus();
-        const item = treeItem as { record?: { id: string; cwd?: string; claudeInfo?: { cwd?: string }; processId?: number } };
+        const item = resolveTreeItem(treeItem, treeView);
         if (!item?.record?.id) return;
 
         let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
@@ -562,6 +600,60 @@ export function registerCommands(
     vscode.commands.registerCommand(
       "ccTabManagement.createProjectAgent",
       (...args: unknown[]) => vscode.commands.executeCommand("ccTabManagement.openProjectAgents", ...args)
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openProjectMcpConfig",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const item = resolveTreeItem(treeItem, treeView);
+        if (!item?.record?.id) return;
+
+        let cwd = item.record.cwd || item.record.claudeInfo?.cwd;
+        if (!cwd && item.record.processId) {
+          cwd = resolveCwd(item.record.processId);
+        }
+        if (!cwd) {
+          vscode.window.showWarningMessage("Could not determine terminal working directory.");
+          return;
+        }
+
+        const mcpPath = path.join(cwd, ".claude", "mcp.json");
+        if (!fs.existsSync(path.join(cwd, ".claude"))) {
+          fs.mkdirSync(path.join(cwd, ".claude"), { recursive: true });
+        }
+        if (!fs.existsSync(mcpPath)) {
+          fs.writeFileSync(mcpPath, "{}\n", "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(mcpPath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.projectSettingsMenu",
+      async (treeItem: unknown) => {
+        cancelPendingFocus();
+        const items = [
+          { label: "$(gear) Project Settings", detail: ".claude/settings.json", action: "settings" },
+          { label: "$(person) Project Agents", detail: ".claude/agents/", action: "agents" },
+          { label: "$(plug) Project MCP Config", detail: ".claude/mcp.json", action: "mcp" },
+        ];
+        const pick = await vscode.window.showQuickPick(items, {
+          placeHolder: "Select a project config file",
+        });
+        if (!pick) return;
+        if (pick.action === "settings") {
+          await vscode.commands.executeCommand("ccTabManagement.openProjectSettings", treeItem);
+        } else if (pick.action === "agents") {
+          await vscode.commands.executeCommand("ccTabManagement.openProjectAgents", treeItem);
+        } else if (pick.action === "mcp") {
+          await vscode.commands.executeCommand("ccTabManagement.openProjectMcpConfig", treeItem);
+        }
+      }
     ),
 
     vscode.commands.registerCommand(
@@ -606,6 +698,37 @@ export function registerCommands(
           preview: false,
           preserveFocus: false,
         });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.openMcpConfig",
+      async () => {
+        const filePath = path.join(os.homedir(), ".claude.json");
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, "{}\n", "utf-8");
+        }
+        await vscode.window.showTextDocument(vscode.Uri.file(filePath), {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+          preserveFocus: false,
+        });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      "ccTabManagement.globalSettingsMenu",
+      async () => {
+        const items = [
+          { label: "$(gear) User Settings", detail: "~/.claude/settings.json", cmd: "ccTabManagement.openUserSettings" },
+          { label: "$(keyboard) Keybindings", detail: "~/.claude/keybindings.json", cmd: "ccTabManagement.openKeybindings" },
+          { label: "$(plug) MCP Config", detail: "~/.claude.json", cmd: "ccTabManagement.openMcpConfig" },
+        ];
+        const pick = await vscode.window.showQuickPick(items, {
+          placeHolder: "Select a global config file",
+        });
+        if (!pick) return;
+        await vscode.commands.executeCommand(pick.cmd);
       }
     )
   );
