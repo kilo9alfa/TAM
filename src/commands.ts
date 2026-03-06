@@ -473,6 +473,39 @@ export function registerCommands(
     ),
 
     vscode.commands.registerCommand(
+      "ccTabManagement.openUserAgents",
+      async () => {
+        const agentsDir = path.join(os.homedir(), ".claude", "agents");
+        if (!fs.existsSync(agentsDir)) {
+          fs.mkdirSync(agentsDir, { recursive: true });
+        }
+
+        const entries = fs.readdirSync(agentsDir, { withFileTypes: true })
+          .filter((e) => e.isDirectory() || e.name.endsWith(".md"));
+
+        if (entries.length === 0) {
+          const newFile = path.join(agentsDir, "agent.md");
+          fs.writeFileSync(newFile, "", "utf-8");
+          await vscode.window.showTextDocument(vscode.Uri.file(newFile), {
+            viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+          });
+        } else if (entries.length === 1) {
+          const entry = entries[0];
+          const entryPath = path.join(agentsDir, entry.name);
+          if (entry.isDirectory()) {
+            await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(entryPath));
+          } else {
+            await vscode.window.showTextDocument(vscode.Uri.file(entryPath), {
+              viewColumn: vscode.ViewColumn.Beside, preview: false, preserveFocus: false,
+            });
+          }
+        } else {
+          await vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(agentsDir));
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
       "ccTabManagement.openProjectCommands",
       async (treeItem: unknown) => {
         cancelPendingFocus();

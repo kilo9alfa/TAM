@@ -163,6 +163,12 @@
         "icon": "$(wand)"
       },
       {
+        "command": "ccTabManagement.openUserAgents",
+        "title": "Edit Global Agents",
+        "category": "Terminal Activity",
+        "icon": "$(person)"
+      },
+      {
         "command": "ccTabManagement.openProjectCommands",
         "title": "Edit Commands",
         "category": "Terminal Activity",
@@ -280,9 +286,14 @@
           "group": "navigation@4"
         },
         {
-          "command": "ccTabManagement.globalSettingsMenu",
+          "command": "ccTabManagement.openUserAgents",
           "when": "view == ccTabManagement.terminalActivity",
           "group": "navigation@5"
+        },
+        {
+          "command": "ccTabManagement.globalSettingsMenu",
+          "when": "view == ccTabManagement.terminalActivity",
+          "group": "navigation@6"
         },
         {
           "command": "ccTabManagement.searchTerminal",
