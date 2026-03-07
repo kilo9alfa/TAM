@@ -167,7 +167,8 @@ export class ActivityTracker implements vscode.Disposable {
     });
 
     // Resolve processId async, then auto-set displayName from CWD
-    terminal.processId.then((pid) => {
+    // Wrap in Promise.resolve to get a real Promise with .catch() (Thenable lacks it)
+    Promise.resolve(terminal.processId).then((pid) => {
       const record = this.records.get(idx);
       if (!record) return;
       record.processId = pid;
@@ -183,6 +184,8 @@ export class ActivityTracker implements vscode.Disposable {
           this.fireChange();
         }
       }
+    }).catch(() => {
+      // Terminal may be disposed before processId resolves
     });
   }
 

@@ -30,7 +30,27 @@ function refreshCacheIfNeeded(): void {
 
   const newCache = new Map<string, string>();
   try {
-    const content = fs.readFileSync(HISTORY_FILE, "utf-8");
+    // Only read the last 256KB to avoid memory spikes on large history files
+    const TAIL_BYTES = 262_144;
+    const size = stat.size;
+    let content: string;
+    if (size <= TAIL_BYTES) {
+      content = fs.readFileSync(HISTORY_FILE, "utf-8");
+    } else {
+      const fd = fs.openSync(HISTORY_FILE, "r");
+      try {
+        const buffer = Buffer.alloc(TAIL_BYTES);
+        fs.readSync(fd, buffer, 0, TAIL_BYTES, size - TAIL_BYTES);
+        content = buffer.toString("utf-8");
+        // Skip the first (likely partial) line
+        const firstNewline = content.indexOf("\n");
+        if (firstNewline !== -1) {
+          content = content.slice(firstNewline + 1);
+        }
+      } finally {
+        fs.closeSync(fd);
+      }
+    }
     for (const line of content.split("\n")) {
       if (!line.trim()) continue;
       try {

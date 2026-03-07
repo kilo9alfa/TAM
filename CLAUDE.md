@@ -21,6 +21,7 @@ VS Code extension that provides visual indication of terminal activity recency. 
 
 - `docs/SPEC.md` - Full specification and requirements
 - `docs/PLAN.md` - Implementation plan with phases and file structure
+- `docs/2026.03.07.exception-handling-fixes.md` - Audit and fixes for unhandled exceptions
 
 ## Build & Run
 

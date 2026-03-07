@@ -194,12 +194,18 @@ export class TerminalTreeDataProvider
 
     if (r.isLocal) {
       const cwd = r.cwd || r.claudeInfo?.cwd;
-      const hasClaude = hasClaudeMd(cwd);
-      const hasMemory = hasMemoryMd(cwd);
-      const hasRules = hasClaudeRules(cwd);
-      const hasCmds = hasClaudeCommands(cwd);
-      const hasSettings = hasProjectSettings(cwd);
-      const hasAgents = hasProjectAgents(cwd);
+      let hasClaude = false, hasMemory = false, hasRules = false;
+      let hasCmds = false, hasSettings = false, hasAgents = false;
+      try {
+        hasClaude = hasClaudeMd(cwd);
+        hasMemory = hasMemoryMd(cwd);
+        hasRules = hasClaudeRules(cwd);
+        hasCmds = hasClaudeCommands(cwd);
+        hasSettings = hasProjectSettings(cwd);
+        hasAgents = hasProjectAgents(cwd);
+      } catch {
+        // fs operations may fail for inaccessible paths
+      }
       let ctx = "terminal_local";
       if (hasClaude) ctx += "_claudemd";
       if (hasMemory) ctx += "_memorymd";
