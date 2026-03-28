@@ -47,6 +47,7 @@ export const COLOR_CLAUDE_APPROVAL = "terminal.ansiRed";
 export const ICON_TERMINAL = "terminal";
 export const ICON_GROUP_ACTIVE = "circle-filled";
 export const ICON_GROUP_STALE = "circle-outline";
+export const ICON_CLAUDE_IDLE = "sparkle";
 export const ICON_CLAUDE_GENERATING = "sync~spin";
 export const ICON_CLAUDE_APPROVAL = "bell";
 

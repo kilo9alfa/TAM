@@ -17,6 +17,7 @@ import {
   ICON_TERMINAL,
   ICON_GROUP_ACTIVE,
   ICON_GROUP_STALE,
+  ICON_CLAUDE_IDLE,
   ICON_CLAUDE_GENERATING,
   ICON_CLAUDE_APPROVAL,
   LABEL_GROUP_ACTIVE,
@@ -53,14 +54,9 @@ export class TerminalTreeDataProvider
   private _onDidChangeTreeData = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
   private _sortMode: SortMode = "time";
-  private _extensionPath: string = "";
 
   get sortMode(): SortMode {
     return this._sortMode;
-  }
-
-  setExtensionPath(extensionPath: string): void {
-    this._extensionPath = extensionPath;
   }
 
   constructor(
@@ -238,23 +234,26 @@ export class TerminalTreeDataProvider
     return `${relative}${ctxSuffix}`;
   }
 
-  private buildIcon(r: ActivityRecord): vscode.ThemeIcon | { light: vscode.Uri; dark: vscode.Uri } {
-    if (r.claudeState && r.claudeState !== "none" && this._extensionPath) {
-      // Remote Claude terminals: use cyan-tinted ThemeIcons instead of custom SVGs
+  private buildIcon(r: ActivityRecord): vscode.ThemeIcon {
+    if (r.claudeState && r.claudeState !== "none") {
+      // Remote Claude terminals: cyan-tinted
       if (!r.isLocal) {
         if (r.claudeState === "generating") {
           return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_REMOTE));
         }
-        const icon = r.claudeState === "approval" ? ICON_CLAUDE_APPROVAL : "terminal";
-        return new vscode.ThemeIcon(icon, new vscode.ThemeColor(COLOR_REMOTE));
+        if (r.claudeState === "approval") {
+          return new vscode.ThemeIcon(ICON_CLAUDE_APPROVAL, new vscode.ThemeColor(COLOR_REMOTE));
+        }
+        return new vscode.ThemeIcon(ICON_CLAUDE_IDLE, new vscode.ThemeColor(COLOR_REMOTE));
       }
-      // Generating uses spinning ThemeIcon (custom SVGs can't animate)
+      // Local Claude terminals
       if (r.claudeState === "generating") {
         return new vscode.ThemeIcon(ICON_CLAUDE_GENERATING, new vscode.ThemeColor(COLOR_CLAUDE_GENERATING));
       }
-      const iconFile = `claude-${r.claudeState}.svg`;
-      const iconUri = vscode.Uri.file(path.join(this._extensionPath, "icons", iconFile));
-      return { light: iconUri, dark: iconUri };
+      if (r.claudeState === "approval") {
+        return new vscode.ThemeIcon(ICON_CLAUDE_APPROVAL, new vscode.ThemeColor(COLOR_CLAUDE_APPROVAL));
+      }
+      return new vscode.ThemeIcon(ICON_CLAUDE_IDLE, new vscode.ThemeColor(COLOR_CLAUDE_IDLE));
     }
 
     if (!r.isLocal) {

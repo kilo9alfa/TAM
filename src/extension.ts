@@ -16,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
   const sessionManager = new SessionManager(tracker, windowManager);
 
   const treeProvider = new TerminalTreeDataProvider(tracker, windowManager);
-  treeProvider.setExtensionPath(context.extensionPath);
   const ctxDecoProvider = new ContextDecorationProvider();
   context.subscriptions.push(
     vscode.window.registerFileDecorationProvider(ctxDecoProvider),
