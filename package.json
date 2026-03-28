@@ -76,6 +76,12 @@
         "icon": "$(search)"
       },
       {
+        "command": "ccTabManagement.openInFinder",
+        "title": "Open in Finder",
+        "category": "Terminal Activity",
+        "icon": "$(folder-opened)"
+      },
+      {
         "command": "ccTabManagement.renameTerminal",
         "title": "Rename Terminal",
         "category": "Terminal Activity",
@@ -353,14 +359,19 @@
           "group": "claude@4"
         },
         {
+          "command": "ccTabManagement.openInFinder",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal/",
+          "group": "terminal@1"
+        },
+        {
           "command": "ccTabManagement.renameTerminal",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
-          "group": "terminal@1"
+          "group": "terminal@2"
         },
         {
           "command": "ccTabManagement.closeTerminal",
           "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
-          "group": "terminal@2"
+          "group": "terminal@3"
         },
         {
           "command": "ccTabManagement.editProjectClaudeMd",

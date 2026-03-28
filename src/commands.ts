@@ -63,6 +63,19 @@ export function registerCommands(
     ),
 
     vscode.commands.registerCommand(
+      "ccTabManagement.openInFinder",
+      async (treeItem: unknown) => {
+        const item = resolveTreeItem(treeItem, treeView);
+        const cwd =
+          item?.record?.claudeInfo?.cwd || item?.record?.cwd;
+        if (cwd) {
+          const { exec } = require("child_process") as typeof import("child_process");
+          exec(`open ${JSON.stringify(cwd)}`);
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
       "ccTabManagement.closeStaleTerminals",
       async () => {
         const terminalMap = tracker.getTerminalMap();
