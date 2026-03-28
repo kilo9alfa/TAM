@@ -3,8 +3,25 @@ import * as path from "path";
 import * as os from "os";
 
 const PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
-const MAX_CONTEXT_TOKENS = 200_000;
+const DEFAULT_CONTEXT_TOKENS = 200_000;
 const TAIL_BYTES = 131_072; // 128KB — must skip past in-progress generation output
+
+/**
+ * Map model IDs to their context window sizes.
+ * Claude Code increased to 1M tokens for Opus/Sonnet 4.x models.
+ */
+function getMaxTokensForModel(model: string | undefined): number {
+  if (!model) return DEFAULT_CONTEXT_TOKENS;
+  // Opus 4.x and Sonnet 4.x support 1M context in Claude Code
+  if (model.startsWith("claude-opus-4") || model.startsWith("claude-sonnet-4")) {
+    return 1_000_000;
+  }
+  // Haiku 4.5 uses 200K
+  if (model.startsWith("claude-haiku-4")) {
+    return 200_000;
+  }
+  return DEFAULT_CONTEXT_TOKENS;
+}
 
 interface CacheEntry {
   mtimeMs: number;
@@ -90,6 +107,22 @@ function parseUsageFromTail(filePath: string): number | undefined {
     // Split into lines and parse from the end to find last usage
     const lines = chunk.split("\n");
 
+    // First pass: find the model from the most recent message
+    let model: string | undefined;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (!line || !line.includes('"model"')) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj?.message?.model) {
+          model = obj.message.model;
+          break;
+        }
+      } catch { /* skip */ }
+    }
+
+    const maxTokens = getMaxTokensForModel(model);
+
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
       if (!line) continue;
@@ -103,7 +136,7 @@ function parseUsageFromTail(filePath: string): number | undefined {
           const input = (usage.input_tokens || 0)
             + (usage.cache_creation_input_tokens || 0)
             + (usage.cache_read_input_tokens || 0);
-          const percent = Math.round((input / MAX_CONTEXT_TOKENS) * 100);
+          const percent = Math.round((input / maxTokens) * 100);
           return Math.min(percent, 100);
         }
       } catch {
