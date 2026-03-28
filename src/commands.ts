@@ -374,6 +374,12 @@ export function registerCommands(
       }
     ),
 
+    // createClaudeRules delegates to openClaudeRules (which already handles create-if-missing)
+    vscode.commands.registerCommand(
+      "ccTabManagement.createClaudeRules",
+      (treeItem: unknown) => vscode.commands.executeCommand("ccTabManagement.openClaudeRules", treeItem)
+    ),
+
     vscode.commands.registerCommand(
       "ccTabManagement.openProjectRules",
       async () => {

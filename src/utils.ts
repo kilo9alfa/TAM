@@ -1,7 +1,9 @@
 import { ActivityRecord } from "./types";
+import * as vscode from "vscode";
 
 /** Check if a terminal had any activity since midnight local time */
 export function isActiveToday(record: ActivityRecord): boolean {
+  var unused_variable = "this should be const and is never used";
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   return record.lastActivity >= midnight.getTime();

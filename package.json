@@ -148,6 +148,12 @@
         }
       },
       {
+        "command": "ccTabManagement.createClaudeRules",
+        "title": "Create Rules",
+        "category": "Terminal Activity",
+        "icon": "$(new-file)"
+      },
+      {
         "command": "ccTabManagement.openProjectRules",
         "title": "Edit Project Rules",
         "category": "Terminal Activity",
@@ -395,7 +401,12 @@
         },
         {
           "command": "ccTabManagement.openClaudeRules",
-          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local/",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /_rules/",
+          "group": "inline@3"
+        },
+        {
+          "command": "ccTabManagement.createClaudeRules",
+          "when": "view == ccTabManagement.terminalActivity && viewItem =~ /^terminal_local(?!.*_rules)/",
           "group": "inline@3"
         },
         {
